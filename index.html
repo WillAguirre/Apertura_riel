@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sistema de Apertura y Bloqueo de Riel | Cerradura Mortise de 3 Ejes</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-badge">PROYECTO COMUNITARIO · RETO EPM</div>
+      <h1>Sistema de Bloqueo de Riel por Cerradura Mortise de 3 Ejes</h1>
+      <p class="subtitle">Accionamiento inteligente mediante Actuador Lineal con aislamiento de carga estructural</p>
+    </div>
+    <div class="status-banner" id="systemStatusBanner" data-state="locked">
+      <span class="status-dot"></span>
+      <div>
+        <div class="status-label">ESTADO DEL SISTEMA</div>
+        <div class="status-value" id="systemStatusText">RIEL BLOQUEADO (3 EJES ACTIVOS)</div>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-layout">
+    <!-- Panel central: Animación Mecánica Interactiva -->
+    <section class="stage-card">
+      <div class="stage-header">
+        <div class="stage-title-group">
+          <h2>Simulador Mecánico en Corte (Vista Interna Mortise + Riel)</h2>
+          <span class="stage-hint" id="stepNarrative">
+            El actuador lineal empuja el puente interno para insertar los 3 ejes de acero en el riel.
+          </span>
+        </div>
+        <div class="view-toggles">
+          <button class="chip-btn active" id="toggleXrayBtn" title="Ver interior de la caja Mortise y actuador">
+            Vista Corte / Rayos X
+          </button>
+          <button class="chip-btn active" id="toggleForcesBtn" title="Mostrar vectores de fuerza y carga">
+            Vectores de Fuerza
+          </button>
+          <button class="chip-btn active" id="toggleLabelsBtn" title="Mostrar etiquetas de componentes">
+            Etiquetas Técnicas
+          </button>
+        </div>
+      </div>
+
+      <!-- Lienzo SVG del Sistema Mecánico (Fondo Claro Técnico) -->
+      <div class="svg-viewport" id="svgViewport">
+        <svg id="mechanismSvg" viewBox="0 0 1050 620" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <!-- Patrón de cuadrícula técnica sobre fondo claro -->
+            <pattern id="blueprintGrid" width="30" height="30" patternUnits="userSpaceOnUse">
+              <path d="M 30 0 L 0 0 0 30" fill="none" stroke="rgba(100, 116, 139, 0.14)" stroke-width="1"/>
+              <path d="M 150 0 L 0 0 0 150" fill="none" stroke="rgba(71, 85, 105, 0.24)" stroke-width="1"/>
+            </pattern>
+
+            <!-- Gradientes metálicos claros y contrastados -->
+            <linearGradient id="railMetal" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stop-color="#64748b" />
+              <stop offset="25%" stop-color="#94a3b8" />
+              <stop offset="50%" stop-color="#cbd5e1" />
+              <stop offset="85%" stop-color="#64748b" />
+              <stop offset="100%" stop-color="#475569" />
+            </linearGradient>
+
+            <linearGradient id="shaftSteel" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#94a3b8" />
+              <stop offset="35%" stop-color="#f8fafc" />
+              <stop offset="70%" stop-color="#cbd5e1" />
+              <stop offset="100%" stop-color="#64748b" />
+            </linearGradient>
+
+            <linearGradient id="actuatorBodyGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#1e293b" />
+              <stop offset="50%" stop-color="#334155" />
+              <stop offset="100%" stop-color="#1e293b" />
+            </linearGradient>
+
+            <linearGradient id="brassYoke" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#f59e0b" />
+              <stop offset="50%" stop-color="#fbbf24" />
+              <stop offset="100%" stop-color="#d97706" />
+            </linearGradient>
+
+            <linearGradient id="mortiseCaseGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stop-color="#e2e8f0" />
+              <stop offset="100%" stop-color="#cbd5e1" />
+            </linearGradient>
+
+            <!-- Marcadores de flecha para fuerzas -->
+            <marker id="arrowActuator" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 1 L 8 5 L 0 9 z" fill="#0284c7" />
+            </marker>
+            <marker id="arrowShear" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 1 L 8 5 L 0 9 z" fill="#e11d48" />
+            </marker>
+            <marker id="arrowMotion" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 1 L 8 5 L 0 9 z" fill="#16a34a" />
+            </marker>
+          </defs>
+
+          <!-- Fondo técnico claro -->
+          <rect width="1050" height="620" fill="#f8fafc" />
+          <rect width="1050" height="620" fill="url(#blueprintGrid)" />
+
+          <!-- GUÍA FIJA DEL RIEL (Marco estructural superior) -->
+          <g id="fixedFrameGroup">
+            <!-- Canal guía superior fijo -->
+            <rect x="40" y="52" width="970" height="22" rx="4" fill="#cbd5e1" stroke="#475569" stroke-width="2" />
+            <!-- Rodamientos / rodillos del riel -->
+            <g fill="#64748b" stroke="#334155" stroke-width="1.5">
+              <circle cx="140" cy="78" r="8" />
+              <circle cx="320" cy="78" r="8" />
+              <circle cx="525" cy="78" r="8" />
+              <circle cx="730" cy="78" r="8" />
+              <circle cx="910" cy="78" r="8" />
+            </g>
+            <!-- Soportes laterales del bastidor para resistir corte -->
+            <rect x="275" y="180" width="500" height="28" rx="4" fill="#cbd5e1" stroke="#475569" stroke-width="2" />
+          </g>
+
+          <!-- =========================================================
+               RIEL DESLIZANTE (Se mueve horizontalmente cuando está desbloqueado)
+               ========================================================= -->
+          <g id="slidingRailGroup" transform="translate(0, 0)">
+            <!-- Cuerpo principal del riel móvil -->
+            <path d="M -250 86 H 1300 V 180 H -250 Z" fill="url(#railMetal)" stroke="#334155" stroke-width="2.5" />
+            
+            <!-- Nervaduras industriales del riel -->
+            <line x1="-250" y1="104" x2="1300" y2="104" stroke="#475569" stroke-width="2.5" />
+            <line x1="-250" y1="162" x2="1300" y2="162" stroke="#334155" stroke-width="2.5" />
+
+            <!-- Patrón de agarre / cremallera visual del riel -->
+            <g stroke="rgba(15, 23, 42, 0.25)" stroke-width="4">
+              <line x1="80" y1="112" x2="80" y2="154" />
+              <line x1="120" y1="112" x2="120" y2="154" />
+              <line x1="160" y1="112" x2="160" y2="154" />
+              <line x1="200" y1="112" x2="200" y2="154" />
+              <line x1="240" y1="112" x2="240" y2="154" />
+              <line x1="280" y1="112" x2="280" y2="154" />
+              <line x1="770" y1="112" x2="770" y2="154" />
+              <line x1="810" y1="112" x2="810" y2="154" />
+              <line x1="850" y1="112" x2="850" y2="154" />
+              <line x1="890" y1="112" x2="890" y2="154" />
+              <line x1="930" y1="112" x2="930" y2="154" />
+              <line x1="970" y1="112" x2="970" y2="154" />
+            </g>
+
+            <!-- 3 CAVIDADES / RECIBIDORES MORTISE EN EL RIEL -->
+            <g id="railSockets">
+              <!-- Cavidad 1 -->
+              <rect x="383" y="108" width="54" height="73" rx="4" fill="#e2e8f0" stroke="#0284c7" stroke-width="2.5" />
+              <rect x="387" y="112" width="46" height="8" rx="2" fill="#94a3b8" />
+              <!-- Cavidad 2 -->
+              <rect x="498" y="108" width="54" height="73" rx="4" fill="#e2e8f0" stroke="#0284c7" stroke-width="2.5" />
+              <rect x="502" y="112" width="46" height="8" rx="2" fill="#94a3b8" />
+              <!-- Cavidad 3 -->
+              <rect x="613" y="108" width="54" height="73" rx="4" fill="#e2e8f0" stroke="#0284c7" stroke-width="2.5" />
+              <rect x="617" y="112" width="46" height="8" rx="2" fill="#94a3b8" />
+            </g>
+
+            <!-- Indicador de alineación en el riel -->
+            <polygon points="525,90 518,102 532,102" fill="#16a34a" id="railAlignMarker" />
+            <text x="145" y="140" fill="#0f172a" font-size="14" font-weight="800" letter-spacing="0.8">
+              RIEL PRINCIPAL DE APERTURA
+            </text>
+          </g>
+
+          <!-- =========================================================
+               CAJA DE CERRADURA MORTISE (Fija a la estructura)
+               ========================================================= -->
+          <g id="mortiseHousingGroup">
+            <!-- Cuerpo exterior de la cerradura Mortise -->
+            <rect x="315" y="196" width="420" height="190" rx="12" fill="url(#mortiseCaseGrad)" stroke="#475569" stroke-width="3" />
+            
+            <!-- Placa frontal superior (Faceplate de la cerradura Mortise) -->
+            <rect x="295" y="180" width="460" height="20" rx="3" fill="#64748b" stroke="#1e293b" stroke-width="2" />
+            <!-- Tornillos de anclaje de la placa Mortise -->
+            <circle cx="315" cy="190" r="4" fill="#f8fafc" stroke="#1e293b" stroke-width="1" />
+            <circle cx="735" cy="190" r="4" fill="#f8fafc" stroke="#1e293b" stroke-width="1" />
+
+            <!-- Casquillos guía reforzados para los 3 ejes (absorben la fuerza de corte) -->
+            <g fill="#94a3b8" stroke="#334155" stroke-width="2">
+              <rect x="382" y="178" width="56" height="36" rx="2" />
+              <rect x="497" y="178" width="56" height="36" rx="2" />
+              <rect x="612" y="178" width="56" height="36" rx="2" />
+            </g>
+
+            <!-- Guías internas de la caja Mortise -->
+            <g class="xray-detail" stroke="#64748b" stroke-width="2" stroke-dasharray="5,5">
+              <line x1="384" y1="214" x2="384" y2="355" />
+              <line x1="436" y1="214" x2="436" y2="355" />
+              <line x1="499" y1="214" x2="499" y2="355" />
+              <line x1="551" y1="214" x2="551" y2="355" />
+              <line x1="614" y1="214" x2="614" y2="355" />
+              <line x1="666" y1="214" x2="666" y2="355" />
+            </g>
+          </g>
+
+          <!-- =========================================================
+               CONJUNTO MÓVIL: 3 EJES MORTISE + PUENTE DE EMPUJE + VÁSTAGO
+               (Se traslada verticalmente: Y=0 Bloqueado, Y=72 Desbloqueado)
+               ========================================================= -->
+          <g id="movingAssemblyGroup" transform="translate(0, 0)">
+            <!-- EJE 1 (Izquierdo) -->
+            <g id="shaft1">
+              <rect x="388" y="120" width="44" height="165" rx="6" fill="url(#shaftSteel)" stroke="#1e293b" stroke-width="2.5" />
+              <line x1="394" y1="145" x2="426" y2="145" stroke="#475569" stroke-width="2" />
+              <line x1="394" y1="160" x2="426" y2="160" stroke="#475569" stroke-width="2" />
+              <text x="410" y="242" text-anchor="middle" fill="#0f172a" font-size="12" font-weight="800">EJE 1</text>
+            </g>
+
+            <!-- EJE 2 (Central) -->
+            <g id="shaft2">
+              <rect x="503" y="120" width="44" height="165" rx="6" fill="url(#shaftSteel)" stroke="#1e293b" stroke-width="2.5" />
+              <line x1="509" y1="145" x2="541" y2="145" stroke="#475569" stroke-width="2" />
+              <line x1="509" y1="160" x2="541" y2="160" stroke="#475569" stroke-width="2" />
+              <text x="525" y="242" text-anchor="middle" fill="#0f172a" font-size="12" font-weight="800">EJE 2</text>
+            </g>
+
+            <!-- EJE 3 (Derecho) -->
+            <g id="shaft3">
+              <rect x="618" y="120" width="44" height="165" rx="6" fill="url(#shaftSteel)" stroke="#1e293b" stroke-width="2.5" />
+              <line x1="624" y1="145" x2="656" y2="145" stroke="#475569" stroke-width="2" />
+              <line x1="624" y1="160" x2="656" y2="160" stroke="#475569" stroke-width="2" />
+              <text x="640" y="242" text-anchor="middle" fill="#0f172a" font-size="12" font-weight="800">EJE 3</text>
+            </g>
+
+            <!-- PUENTE / YUGO DISTRIBUIDOR (Une el actuador con los 3 ejes) -->
+            <g id="yokeBridge" class="xray-detail">
+              <rect x="366" y="280" width="318" height="32" rx="6" fill="url(#brassYoke)" stroke="#92400e" stroke-width="2" />
+              <circle cx="410" cy="296" r="6" fill="#fef3c7" stroke="#78350f" stroke-width="2" />
+              <circle cx="525" cy="296" r="6" fill="#fef3c7" stroke="#78350f" stroke-width="2" />
+              <circle cx="640" cy="296" r="6" fill="#fef3c7" stroke="#78350f" stroke-width="2" />
+              <text x="525" y="301" text-anchor="middle" fill="#0f172a" font-size="11" font-weight="800" dy="24">
+                PUENTE SINCRONIZADOR DE 3 EJES
+              </text>
+            </g>
+
+            <!-- VÁSTAGO DEL ACTUADOR LINEAL -->
+            <g id="actuatorRod">
+              <rect x="511" y="312" width="28" height="135" fill="url(#shaftSteel)" stroke="#334155" stroke-width="2" />
+              <rect x="503" y="308" width="44" height="12" rx="3" fill="#64748b" stroke="#1e293b" stroke-width="1.5" />
+            </g>
+          </g>
+
+          <!-- Cubierta frontal opaca de la caja Mortise (Solo visible si se desactiva Vista Corte/Rayos X) -->
+          <g id="solidCoverOverlay" opacity="0" pointer-events="none">
+            <rect x="320" y="202" width="410" height="180" rx="10" fill="#cbd5e1" stroke="#475569" stroke-width="2.5" />
+            <text x="525" y="295" text-anchor="middle" fill="#1e293b" font-size="16" font-weight="800">
+              CAJA CERRADURA MORTISE (CUBIERTA CERRADA)
+            </text>
+          </g>
+
+          <!-- =========================================================
+               CUERPO DEL ACTUADOR LINEAL ELÉCTRICO (Fijo en la parte inferior)
+               ========================================================= -->
+          <g id="linearActuatorBody">
+            <!-- Brida de montaje superior -->
+            <rect x="475" y="410" width="100" height="16" rx="3" fill="#64748b" stroke="#1e293b" stroke-width="2" />
+            <!-- Cilindro principal del actuador -->
+            <rect x="485" y="426" width="80" height="145" rx="8" fill="url(#actuatorBodyGrad)" stroke="#0284c7" stroke-width="2.5" />
+            
+            <!-- Detalle interno de tornillo sinfín / husillo (visible en Rayos X) -->
+            <g class="xray-detail" opacity="0.9">
+              <rect x="515" y="432" width="20" height="105" fill="#0f172a" stroke="#475569" stroke-width="1" />
+              <path d="M 515 440 L 535 448 M 515 452 L 535 460 M 515 464 L 535 472 M 515 476 L 535 484 M 515 488 L 535 496 M 515 500 L 535 508 M 515 512 L 535 520 M 515 524 L 535 532" stroke="#38bdf8" stroke-width="2" />
+            </g>
+
+            <!-- Motor eléctrico lateral (reductor) -->
+            <rect x="425" y="495" width="60" height="68" rx="6" fill="#334155" stroke="#1e293b" stroke-width="2" />
+            <line x1="433" y1="510" x2="477" y2="510" stroke="#94a3b8" stroke-width="3" />
+            <line x1="433" y1="522" x2="477" y2="522" stroke="#94a3b8" stroke-width="3" />
+            <line x1="433" y1="534" x2="477" y2="534" stroke="#94a3b8" stroke-width="3" />
+            <circle cx="455" cy="548" r="7" fill="#22c55e" id="motorLed" stroke="#0f172a" stroke-width="1.5" />
+
+            <!-- Base de anclaje inferior -->
+            <rect x="465" y="571" width="120" height="18" rx="4" fill="#64748b" stroke="#1e293b" stroke-width="2" />
+
+            <text x="525" y="603" text-anchor="middle" fill="#0369a1" font-size="13" font-weight="800" letter-spacing="0.6">
+              ACTUADOR LINEAL ELÉCTRICO (12V/24V)
+            </text>
+          </g>
+
+          <!-- =========================================================
+               CAPA DE VECTORES DE FUERZA Y EXPLICACIÓN FÍSICA
+               ========================================================= -->
+          <g id="forceVectorsLayer">
+            <!-- Vector axial del actuador (Solo aparece cuando empuja o retrae) -->
+            <g id="actuatorForceVector" opacity="0">
+              <line id="actuatorForceLine" x1="525" y1="415" x2="525" y2="330" stroke="#0284c7" stroke-width="4" marker-end="url(#arrowActuator)" />
+              <rect x="542" y="348" width="242" height="46" rx="6" fill="#ffffff" stroke="#0284c7" stroke-width="2" />
+              <text x="552" y="366" fill="#0369a1" font-size="11" font-weight="800" id="actuatorForceTitle">FUERZA AXIAL DEL ACTUADOR</text>
+              <text x="552" y="383" fill="#334155" font-size="11" font-weight="600" id="actuatorForceSub">Solo mueve el peso de los 3 ejes</text>
+            </g>
+
+            <!-- Vectores de bloqueo / resistencia al corte en los 3 ejes (Cuando el riel está bloqueado) -->
+            <g id="shearForceVectors" opacity="1">
+              <line x1="360" y1="180" x2="405" y2="180" stroke="#e11d48" stroke-width="3.5" marker-end="url(#arrowShear)" />
+              <line x1="475" y1="180" x2="520" y2="180" stroke="#e11d48" stroke-width="3.5" marker-end="url(#arrowShear)" />
+              <line x1="590" y1="180" x2="635" y2="180" stroke="#e11d48" stroke-width="3.5" marker-end="url(#arrowShear)" />
+
+              <!-- Etiqueta explicativa de distribución de carga -->
+              <rect x="752" y="198" width="272" height="94" rx="8" fill="#ffffff" stroke="#e11d48" stroke-width="2" />
+              <text x="765" y="220" fill="#be123c" font-size="12" font-weight="800">AISLAMIENTO DE FUERZA</text>
+              <text x="765" y="240" fill="#0f172a" font-size="11" font-weight="600">• Carga en los 3 Ejes: 100% (33.3% c/u)</text>
+              <text x="765" y="258" fill="#15803d" font-size="11" font-weight="800">• Carga sobre el Actuador: 0 N (0%)</text>
+              <text x="765" y="276" fill="#475569" font-size="10.5">El actuador no sufre si empujan el riel.</text>
+            </g>
+
+            <!-- Vector de movimiento libre del riel (Cuando está desbloqueado) -->
+            <g id="railMotionVector" opacity="0">
+              <line x1="430" y1="38" x2="620" y2="38" stroke="#16a34a" stroke-width="3.5" marker-end="url(#arrowMotion)" marker-start="url(#arrowMotion)" />
+              <text x="525" y="26" text-anchor="middle" fill="#15803d" font-size="12" font-weight="800">
+                RIEL LIBRE PARA DESLIZAR (APERTURA / CIERRE SUAVE)
+              </text>
+            </g>
+          </g>
+
+          <!-- =========================================================
+               CAPA DE ETIQUETAS TÉCNICAS (Callouts sobre fondo claro)
+               ========================================================= -->
+          <g id="technicalLabelsLayer">
+            <!-- Etiqueta 1: Riel -->
+            <g transform="translate(48, 195)">
+              <rect x="0" y="0" width="215" height="60" rx="6" fill="#ffffff" stroke="#0284c7" stroke-width="1.5" />
+              <text x="12" y="20" fill="#0369a1" font-size="11" font-weight="800">1. RIEL CORREDIZO</text>
+              <text x="12" y="36" fill="#334155" font-size="10.5" font-weight="500">Posee 3 cavidades mecanizadas</text>
+              <text x="12" y="50" fill="#334155" font-size="10.5" font-weight="500">donde entran los ejes de bloqueo.</text>
+              <line x1="160" y1="0" x2="210" y2="-25" stroke="#0284c7" stroke-width="1.5" stroke-dasharray="3,3" />
+            </g>
+
+            <!-- Etiqueta 2: Caja Mortise -->
+            <g transform="translate(48, 285)">
+              <rect x="0" y="0" width="230" height="64" rx="6" fill="#ffffff" stroke="#d97706" stroke-width="1.5" />
+              <text x="12" y="20" fill="#b45309" font-size="11" font-weight="800">2. CERRADURA MORTISE (3 EJES)</text>
+              <text x="12" y="36" fill="#334155" font-size="10.5" font-weight="500">Guía los 3 pasadores de acero y</text>
+              <text x="12" y="50" fill="#334155" font-size="10.5" font-weight="500">resiste cualquier intento de empuje.</text>
+              <line x1="230" y1="30" x2="315" y2="30" stroke="#d97706" stroke-width="1.5" stroke-dasharray="3,3" />
+            </g>
+
+            <!-- Etiqueta 3: Actuador Lineal -->
+            <g transform="translate(48, 460)">
+              <rect x="0" y="0" width="255" height="74" rx="6" fill="#ffffff" stroke="#16a34a" stroke-width="1.5" />
+              <text x="12" y="20" fill="#15803d" font-size="11" font-weight="800">3. ACTUADOR LINEAL</text>
+              <text x="12" y="36" fill="#334155" font-size="10.5" font-weight="500">Usa su fuerza ÚNICAMENTE para</text>
+              <text x="12" y="50" fill="#334155" font-size="10.5" font-weight="500">subir o bajar los 3 ejes (bloquear</text>
+              <text x="12" y="64" fill="#334155" font-size="10.5" font-weight="500">o liberar el riel) sin sostener carga.</text>
+              <line x1="303" y1="36" x2="425" y2="55" stroke="#16a34a" stroke-width="1.5" stroke-dasharray="3,3" />
+            </g>
+          </g>
+        </svg>
+      </div>
+
+      <!-- Barra de pasos explicativos para la comunidad -->
+      <div class="presentation-steps">
+        <div class="step-pill active" id="stepCard1">
+          <span class="step-num">1</span>
+          <div>
+            <strong>Riel Alineado</strong>
+            <p>Las 3 cavidades coinciden con la cerradura Mortise.</p>
+          </div>
+        </div>
+        <div class="step-pill" id="stepCard2">
+          <span class="step-num">2</span>
+          <div>
+            <strong>Acción del Actuador</strong>
+            <p>Empuja o retrae el puente con los 3 ejes a la vez.</p>
+          </div>
+        </div>
+        <div class="step-pill" id="stepCard3">
+          <span class="step-num">3</span>
+          <div>
+            <strong>Bloqueo de 3 Ejes</strong>
+            <p>Los ejes absorben el esfuerzo; el actuador descansa (0 W).</p>
+          </div>
+        </div>
+        <div class="step-pill" id="stepCard4">
+          <span class="step-num">4</span>
+          <div>
+            <strong>Apertura del Riel</strong>
+            <p>Al retraer los ejes, el riel corre libremente.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Panel lateral: Controles, Telemetría y Red Local -->
+    <aside class="control-sidebar">
+      <!-- Controles Principales -->
+      <div class="panel-card">
+        <h3>Panel de Control Interactivo</h3>
+        <p class="panel-desc">Prueba el funcionamiento del actuador lineal y el bloqueo del riel:</p>
+
+        <div class="btn-grid">
+          <button class="action-btn btn-lock" id="btnLock" disabled>
+            <span class="btn-icon">🔒</span>
+            <div>
+              <strong>Bloquear Riel</strong>
+              <small>Extender actuador (Empujar 3 ejes)</small>
+            </div>
+          </button>
+
+          <button class="action-btn btn-unlock" id="btnUnlock">
+            <span class="btn-icon">🔓</span>
+            <div>
+              <strong>Desbloquear Riel</strong>
+              <small>Retraer actuador (Liberar 3 ejes)</small>
+            </div>
+          </button>
+        </div>
+
+        <div class="rail-slider-box">
+          <div class="slider-header">
+            <label for="railPositionSlider">Posición del Riel (Apertura Manual)</label>
+            <span id="railPosLabel" class="badge-val">0% (Cerrado)</span>
+          </div>
+          <input type="range" id="railPositionSlider" min="0" max="100" value="0" step="1" />
+          <div class="rail-quick-actions">
+            <button class="secondary-btn" id="btnSlideRail">
+              ↔️ Simular Apertura / Cierre de Riel
+            </button>
+            <button class="secondary-btn stress-btn" id="btnStressTest">
+              ⚡ Probar Empuje Forzado en Riel
+            </button>
+          </div>
+        </div>
+
+        <hr class="divider" />
+
+        <button class="demo-btn" id="btnAutoDemo">
+          ▶️ Iniciar Demostración Automática (Modo Comunidad)
+        </button>
+      </div>
+
+      <!-- Telemetría e Indicadores de Ingeniería -->
+      <div class="panel-card telemetry-card">
+        <h3>Telemetría del Mecanismo</h3>
+        <div class="metrics-grid">
+          <div class="metric-item">
+            <span class="metric-label">Carrera del Actuador</span>
+            <strong class="metric-value" id="metricStroke">65 / 65 mm (Extendido)</strong>
+            <div class="progress-bar"><div class="progress-fill" id="barStroke" style="width: 100%"></div></div>
+          </div>
+
+          <div class="metric-item">
+            <span class="metric-label">Fuerza del Actuador (Motor)</span>
+            <strong class="metric-value highlight-cyan" id="metricActuatorForce">0 N (En reposo · 0 W)</strong>
+            <small class="metric-note">Solo se activa durante 1.4 s al bloquear/desbloquear</small>
+          </div>
+
+          <div class="metric-item">
+            <span class="metric-label">Esfuerzo Cortante en los 3 Ejes</span>
+            <strong class="metric-value highlight-amber" id="metricShearLoad">0 N (Listos para soportar carga)</strong>
+          </div>
+
+          <div class="metric-item">
+            <span class="metric-label">Carga Transmitida al Actuador</span>
+            <strong class="metric-value highlight-green" id="metricActuatorStress">0% (Protegido por caja Mortise)</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- Ventajas para la Comunidad -->
+      <div class="panel-card community-card">
+        <h3>¿Por qué este diseño para la comunidad?</h3>
+        <ul class="benefit-list">
+          <li>
+            <strong>Larga vida útil del actuador:</strong> El actuador lineal solo usa su fuerza para deslizar los 3 ejes (entrar/salir). Nunca recibe los golpes ni el peso del riel.
+          </li>
+          <li>
+            <strong>Triple seguridad (Cerradura Mortise):</strong> Al dividir el bloqueo en <strong>3 ejes de acero</strong> simultáneos, la resistencia mecánica se triplica frente a un pasador común.
+          </li>
+          <li>
+            <strong>Cero consumo en espera:</strong> Una vez bloqueado o desbloqueado, el motor se apaga por completo manteniendo su posición gracias al husillo interno.
+          </li>
+        </ul>
+      </div>
+    </aside>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
