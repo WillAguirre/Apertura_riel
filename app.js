@@ -17,7 +17,7 @@ const state = {
 
 // Estado del Laboratorio de Emergencia (Vista 2)
 const emState = {
-  currentSol: 1, // 1 = Pasador+Llave/Guaya, 2 = Bornes Batería 12V, 3 = Leva Excéntrica 90°
+  currentSol: 1, // 1 = Pasador+Llave, 2 = Bornes Batería 12V, 3 = Leva Excéntrica 90°, 4 = Carga Inalámbrica Larga Distancia
   isAnimating: false,
   isReleased: false,
   rodOffsetPx: 0,      // 0 = Extendido arriba (trabado), 70 = Retraído
@@ -27,6 +27,8 @@ const emState = {
   keyAngleDeg: 0,      // 0 a 90 grados
   batteryOffsetPx: 95, // 95 = Separada, 52 = Conectada a los bornes
   camAngleDeg: 0,      // 0 a 90 grados
+  wirelessTxX: 835,    // 835 = Separado afuera, 782 = Junto a la tapa transmitiendo
+  wirelessActive: false,
 };
 
 const dom = {
@@ -87,6 +89,7 @@ const dom = {
     document.getElementById('solTab1'),
     document.getElementById('solTab2'),
     document.getElementById('solTab3'),
+    document.getElementById('solTab4'),
   ],
   solStageTitle: document.getElementById('solStageTitle'),
   solNarrative: document.getElementById('solNarrative'),
@@ -102,12 +105,17 @@ const dom = {
   sol1MechanismLayer: document.getElementById('sol1MechanismLayer'),
   sol2MechanismLayer: document.getElementById('sol2MechanismLayer'),
   sol3MechanismLayer: document.getElementById('sol3MechanismLayer'),
+  sol4MechanismLayer: document.getElementById('sol4MechanismLayer'),
 
   emQuickReleasePin: document.getElementById('emQuickReleasePin'),
   emKeyCylinder: document.getElementById('emKeyCylinder'),
   emPinStatusText: document.getElementById('emPinStatusText'),
   emBatteryPack: document.getElementById('emBatteryPack'),
   emEccentricCamGroup: document.getElementById('emEccentricCamGroup'),
+  emWirelessTxGroup: document.getElementById('emWirelessTxGroup'),
+  emWirelessWaves: document.getElementById('emWirelessWaves'),
+  emRxLed: document.getElementById('emRxLed'),
+  emTxStatusText: document.getElementById('emTxStatusText'),
 
   emSidebarTitle: document.getElementById('emSidebarTitle'),
   emSidebarDesc: document.getElementById('emSidebarDesc'),
@@ -515,6 +523,16 @@ const SOLUTIONS_META = {
     btnLabel: '🔧 1. Girar Leva Excéntrica 90° y Abrir Riel',
     cost: '~$5.00 USD (Leva mecanizada)',
   },
+  4: {
+    title: 'Solución 4: Módulo de Carga Inalámbrica de Larga Distancia (Sobre la Tapa Ciega)',
+    narrativeLocked:
+      'Sobre la cara interna de la tapa va el Módulo Receptor conectado al actuador. Al acercar el Transmisor externo, energiza el actuador a través de la tapa.',
+    narrativeReleased:
+      '¡Transferencia inalámbrica exitosa! El módulo externo activó el actuador a través de la tapa ciega, retrajo los 3 pasadores y permitió entrar.',
+    sidebarTitle: 'Probar Solución 4: Carga Inalámbrica Tx/Rx',
+    btnLabel: '📡 1. Acercar Cargador Inalámbrico Externo y Abrir',
+    cost: '~$8–12 USD (Par Módulos Tx/Rx Larga Distancia)',
+  },
 };
 
 function renderEmergencyScene() {
@@ -524,9 +542,13 @@ function renderEmergencyScene() {
   dom.sol1MechanismLayer.setAttribute('opacity', emState.currentSol === 1 ? '1' : '0');
   dom.sol2MechanismLayer.setAttribute('opacity', emState.currentSol === 2 ? '1' : '0');
   dom.sol3MechanismLayer.setAttribute('opacity', emState.currentSol === 3 ? '1' : '0');
+  dom.sol4MechanismLayer.setAttribute('opacity', emState.currentSol === 4 ? '1' : '0');
 
   // Resortes visibles en Solución 1 y 3
-  dom.emReturnSprings.setAttribute('opacity', emState.currentSol === 2 ? '0.2' : '1');
+  dom.emReturnSprings.setAttribute(
+    'opacity',
+    emState.currentSol === 2 || emState.currentSol === 4 ? '0.2' : '1'
+  );
 
   // Transformaciones geométricas
   dom.emActuatorRodGroup.setAttribute('transform', `translate(0, ${emState.rodOffsetPx.toFixed(1)})`);
@@ -560,6 +582,18 @@ function renderEmergencyScene() {
     `translate(485, 292) rotate(${emState.camAngleDeg.toFixed(1)})`
   );
 
+  // Solución 4: Carga Inalámbrica de Larga Distancia
+  dom.emWirelessTxGroup.setAttribute(
+    'transform',
+    `translate(${emState.wirelessTxX.toFixed(1)}, 225)`
+  );
+  dom.emWirelessWaves.setAttribute('opacity', emState.wirelessActive ? '1' : '0');
+  dom.emWirelessWaves.classList.toggle('wireless-active', emState.wirelessActive);
+  dom.emRxLed.setAttribute('fill', emState.wirelessActive ? '#22c55e' : '#ef4444');
+  dom.emTxStatusText.textContent = emState.wirelessActive
+    ? 'TRANSMITIENDO ENERGÍA'
+    : 'EN ESPERA (FUERA)';
+
   // Textos y estados
   dom.solStageTitle.textContent = meta.title;
   dom.emSidebarTitle.textContent = meta.sidebarTitle;
@@ -571,7 +605,7 @@ function renderEmergencyScene() {
 
   if (emState.isReleased) {
     dom.solStatusPill.dataset.status = 'released';
-    dom.solStatusPill.textContent = '✅ RIEL ABIERTO MANUALMENTE CON ÉXITO';
+    dom.solStatusPill.textContent = '✅ RIEL DESBLOQUEADO Y ABIERTO CON ÉXITO';
     dom.emStatShafts.textContent = 'Retraídos (Riel Abierto)';
     dom.emStatShafts.className = 'highlight-green';
 
@@ -581,6 +615,13 @@ function renderEmergencyScene() {
       dom.emStatRod.textContent = '0 mm (Retraído con batería)';
       dom.emMotorLed.setAttribute('fill', '#22c55e');
       dom.emActuatorFooterText.textContent = 'ACTUADOR ENERGIZADO POR BORNES DE EMERGENCIA';
+    } else if (emState.currentSol === 4) {
+      dom.emStatPower.textContent = '12 V (Inducción Inalámbrica Tx → Rx)';
+      dom.emStatPower.className = 'highlight-cyan';
+      dom.emStatRod.textContent = '0 mm (Retraído por Carga Inalámbrica)';
+      dom.emMotorLed.setAttribute('fill', '#22c55e');
+      dom.emActuatorFooterText.textContent =
+        'ACTUADOR ACTIVADO POR CARGA INALÁMBRICA DE LARGA DISTANCIA';
     } else {
       dom.emStatPower.textContent = '0 V (Sin Electricidad)';
       dom.emStatPower.className = 'highlight-rose';
@@ -613,6 +654,8 @@ function selectEmergencySolution(solNumber) {
   emState.keyAngleDeg = 0;
   emState.batteryOffsetPx = 95;
   emState.camAngleDeg = 0;
+  emState.wirelessTxX = 835;
+  emState.wirelessActive = false;
 
   dom.solTabBtns.forEach((btn, idx) => {
     btn.classList.toggle('active', idx + 1 === solNumber);
@@ -628,7 +671,6 @@ async function runEmergencyReleaseAnimation() {
   renderEmergencyScene();
 
   if (emState.currentSol === 1) {
-    // Paso 1: Girar llave 90° y retirar el pasador rojo con la guaya
     dom.solNarrative.textContent =
       'Paso 1: Girando la llave de emergencia... La guaya retira el pasador transversal del vástago.';
     await animateValue({
@@ -642,7 +684,6 @@ async function runEmergencyReleaseAnimation() {
       },
     });
 
-    // Paso 2: El puente y los 3 ejes caen por gravedad + resortes (el vástago sigue en 0)
     dom.solNarrative.textContent =
       'Paso 2: ¡Puente liberado! Los 3 ejes descienden por gravedad y resortes aunque el vástago del actuador siga trabado arriba.';
     await animateValue({
@@ -655,7 +696,6 @@ async function runEmergencyReleaseAnimation() {
       },
     });
   } else if (emState.currentSol === 2) {
-    // Paso 1: Acercar la batería de 12V a los bornes externos
     dom.solNarrative.textContent =
       'Paso 1: Conectando batería portátil de 12V/9V a los dos bornes externos de emergencia...';
     await animateValue({
@@ -682,7 +722,6 @@ async function runEmergencyReleaseAnimation() {
       },
     });
   } else if (emState.currentSol === 3) {
-    // Paso 1: Girar la leva excéntrica 90° mientras el puente baja simultáneamente
     dom.solNarrative.textContent =
       'Paso 1: Girando la leva excéntrica 90° con llave manual... El apoyo desciende y baja los 3 ejes sin mover el actuador.';
     await animateValue({
@@ -695,11 +734,43 @@ async function runEmergencyReleaseAnimation() {
         renderEmergencyScene();
       },
     });
+  } else if (emState.currentSol === 4) {
+    // Paso 1: Acercar el Módulo Transmisor de Carga Inalámbrica de Larga Distancia por la parte externa de la tapa
+    dom.solNarrative.textContent =
+      'Paso 1: Acercando el Módulo de Carga Inalámbrica de Larga Distancia por la parte externa de la tapa...';
+    await animateValue({
+      from: 835,
+      to: 782,
+      duration: 750,
+      onUpdate: (val) => {
+        emState.wirelessTxX = val;
+        renderEmergencyScene();
+      },
+    });
+
+    // Paso 2: Activar transferencia inductiva a través de la tapa y retraer el actuador (desactivando los pasadores)
+    emState.wirelessActive = true;
+    dom.emMotorLed.setAttribute('fill', '#22c55e');
+    renderEmergencyScene();
+    dom.solNarrative.textContent =
+      'Paso 2: ¡Acoplamiento inalámbrico activo! El módulo receptor sobre la tapa alimenta el actuador y retrae los 3 ejes.';
+    await waitMs(400);
+
+    await animateValue({
+      from: 0,
+      to: 70,
+      duration: 1200,
+      onUpdate: (val) => {
+        emState.rodOffsetPx = val;
+        emState.bridgeOffsetPx = val;
+        renderEmergencyScene();
+      },
+    });
   }
 
-  // Paso Final común: Deslizar el riel hacia la derecha (apertura manual exitosa)
+  // Paso Final común: Deslizar el riel hacia la derecha (apertura exitosa)
   dom.solNarrative.textContent =
-    'Paso 3: Con los 3 ejes fuera de las cavidades, el riel se desliza y abre manualmente sin obstáculos.';
+    'Paso 3: Con los pasadores desactivados y fuera del riel, el sistema permite abrir y entrar libremente.';
   await animateValue({
     from: 0,
     to: 185,
@@ -721,7 +792,7 @@ async function resetEmergencySimulation() {
   emState.isAnimating = true;
   renderEmergencyScene();
 
-  dom.solNarrative.textContent = 'Cerrando el riel y reacoplando el sistema a su posición original...';
+  dom.solNarrative.textContent = 'Cerrando el riel y volviendo a bloquear el sistema...';
 
   await animateValue({
     from: emState.railOffsetPx,
@@ -739,6 +810,9 @@ async function resetEmergencySimulation() {
   const startKey = emState.keyAngleDeg;
   const startBat = emState.batteryOffsetPx;
   const startCam = emState.camAngleDeg;
+  const startTxX = emState.wirelessTxX;
+
+  emState.wirelessActive = false;
 
   await animateValue({
     from: 1,
@@ -751,6 +825,7 @@ async function resetEmergencySimulation() {
       emState.keyAngleDeg = startKey * t;
       emState.batteryOffsetPx = 95 - (95 - startBat) * t;
       emState.camAngleDeg = startCam * t;
+      emState.wirelessTxX = 835 - (835 - startTxX) * t;
       renderEmergencyScene();
     },
   });

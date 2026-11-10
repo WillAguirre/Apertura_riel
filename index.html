@@ -20,7 +20,7 @@
         🔒 1. Sistema Principal (Mortise + Riel)
       </button>
       <button class="main-tab-btn emergency-tab-btn" id="tabBtnEmergency" data-tab="viewEmergency">
-        🚨 2. Apertura Manual sin Energía (3 Soluciones Económicas)
+        🚨 2. Apertura sin Energía (4 Soluciones Animadas)
       </button>
     </nav>
   </header>
@@ -38,7 +38,7 @@
         </div>
       </div>
       <button class="goto-emergency-btn" id="btnJumpToEmergency">
-        ⚡ ¿Qué pasa si se va la luz o falla el actuador? Ver las 3 simulaciones de desbloqueo manual →
+        ⚡ ¿Qué pasa si se va la luz? Ver las 4 simulaciones de apertura de emergencia (incluye Carga Inalámbrica) →
       </button>
     </div>
 
@@ -451,34 +451,39 @@
   </div>
 
   <!-- ========================================================================
-       VISTA 2: LABORATORIO DE APERTURA MANUAL DE EMERGENCIA (3 SOLUCIONES)
+       VISTA 2: LABORATORIO DE APERTURA DE EMERGENCIA (4 SOLUCIONES)
        ======================================================================== -->
   <div id="viewEmergency" class="tab-view">
     <section class="emergency-hero">
       <div class="emergency-hero-text">
-        <span class="emergency-pill">INGENIERÍA DE BAJO COSTO · A PRUEBA DE APAGONES</span>
-        <h2>¿Cómo abrir el riel manualmente si el actuador se queda sin energía o falla?</h2>
+        <span class="emergency-pill">INGENIERÍA DE RESPALDO · A PRUEBA DE APAGONES</span>
+        <h2>¿Cómo abrir el riel si el actuador se queda sin energía eléctrica?</h2>
         <p>
-          Los actuadores lineales usan un <strong>tornillo sinfín autobloqueante</strong>: si hay un corte de energía o se quema el motor cuando el riel está bloqueado, el vástago queda rígido y no se puede bajar empujándolo. Aquí presentamos <strong>3 soluciones ingeniosas y muy económicas ($1.50 a $5 USD)</strong> con simulaciones interactivas para elegir o combinar en el proyecto comunitario:
+          Los actuadores lineales usan un <strong>tornillo sinfín autobloqueante</strong>: si hay un corte de energía cuando el riel está bloqueado, el vástago queda rígido. Aquí presentamos <strong>4 soluciones ingeniosas</strong> —incluyendo <strong>Carga Inalámbrica de Larga Distancia a través de la tapa ciega</strong>— con simulaciones interactivas para presentar a la comunidad:
         </p>
       </div>
 
-      <!-- Selector de las 3 Soluciones -->
+      <!-- Selector de las 4 Soluciones -->
       <div class="solution-selector">
         <button class="sol-tab-btn active" data-sol="1" id="solTab1">
-          <span class="sol-badge">RECOMENDADA · ~$4 USD</span>
-          <strong>Opción 1: Pasador de Desacople Rápido + Llave/Guaya</strong>
+          <span class="sol-badge">MECÁNICA + GUAYA · ~$4 USD</span>
+          <strong>Opción 1: Pasador de Desacople + Llave</strong>
           <small>Libera los 3 ejes por gravedad/resorte aunque el actuador esté trabado</small>
         </button>
         <button class="sol-tab-btn" data-sol="2" id="solTab2">
           <span class="sol-badge">MÁS BARATA · ~$1.50 USD</span>
-          <strong>Opción 2: Bornes Externos para Batería 9V / 12V</strong>
-          <small>Energiza el actuador durante 1.5 s desde afuera en caso de apagón</small>
+          <strong>Opción 2: Bornes Externos Batería 12V</strong>
+          <small>Energiza el actuador durante 1.4 s desde afuera en caso de apagón</small>
         </button>
         <button class="sol-tab-btn" data-sol="3" id="solTab3">
           <span class="sol-badge">MECÁNICA PURA · ~$5 USD</span>
-          <strong>Opción 3: Leva Excéntrica Manual en Acople Telescópico</strong>
+          <strong>Opción 3: Leva Excéntrica Manual 90°</strong>
           <small>Gira una leva 90° con llave para bajar los 3 ejes sin mover el actuador</small>
+        </button>
+        <button class="sol-tab-btn" data-sol="4" id="solTab4">
+          <span class="sol-badge">100% SELLADA · SIN CONTACTO</span>
+          <strong>Opción 4: Carga Inalámbrica Larga Distancia</strong>
+          <small>Transmite energía a través de la tapa para activar el actuador y abrir</small>
         </button>
       </div>
     </section>
@@ -700,6 +705,72 @@
                 <text x="12" y="102" fill="#b45309" font-size="10.5" font-weight="700">sobre el collarín telescópico.</text>
               </g>
             </g>
+
+            <!-- ===================================================
+                 MECANISMO ESPECÍFICO SOLUCIÓN 4: CARGA INALÁMBRICA DE LARGA DISTANCIA
+                 =================================================== -->
+            <g id="sol4MechanismLayer" opacity="0" pointer-events="none">
+              <!-- Cables desde el Módulo Receptor (sobre la tapa) hacia el Actuador Lineal -->
+              <path d="M 702 355 L 702 545 L 420 545 L 420 530" fill="none" stroke="#0284c7" stroke-width="3.5" stroke-dasharray="6,3" id="emWirelessCablePos" />
+              <path d="M 692 355 L 692 558 L 406 558 L 406 530" fill="none" stroke="#334155" stroke-width="3" />
+
+              <!-- TAPA / PARED EXTERIOR CIEGA (Sin perforaciones, 100% sellada) -->
+              <rect x="735" y="175" width="24" height="240" rx="4" fill="#94a3b8" stroke="#334155" stroke-width="2.5" />
+              <line x1="747" y1="182" x2="747" y2="408" stroke="#cbd5e1" stroke-width="2" stroke-dasharray="6,4" />
+              <text x="747" y="166" text-anchor="middle" fill="#1e293b" font-size="10.5" font-weight="800">
+                TAPA CIEGA SELLADA
+              </text>
+
+              <!-- MÓDULO RECEPTOR INALÁMBRICO DE LARGA DISTANCIA (Fijo por dentro sobre la tapa) -->
+              <g id="emWirelessRxModule" transform="translate(682, 232)">
+                <rect x="0" y="0" width="52" height="125" rx="6" fill="#0f172a" stroke="#0284c7" stroke-width="2.5" />
+                <!-- Bobina receptora de cobre en el borde de la tapa -->
+                <rect x="38" y="14" width="10" height="96" rx="3" fill="#f59e0b" stroke="#b45309" stroke-width="1.5" />
+                <circle cx="20" cy="24" r="6" fill="#ef4444" id="emRxLed" stroke="#ffffff" stroke-width="1.2" />
+                <text x="20" y="66" text-anchor="middle" fill="#38bdf8" font-size="9.5" font-weight="800" transform="rotate(-90 20 66)">
+                  RECEPTOR Rx
+                </text>
+              </g>
+
+              <!-- ONDAS MAGNÉTICAS DE LARGA DISTANCIA (Atraviesan la tapa ciega) -->
+              <g id="emWirelessWaves" opacity="0">
+                <path d="M 792 260 Q 760 295 792 330" fill="none" stroke="#0284c7" stroke-width="3" />
+                <path d="M 776 250 Q 742 295 776 340" fill="none" stroke="#0ea5e9" stroke-width="3" />
+                <path d="M 760 242 Q 726 295 760 348" fill="none" stroke="#22c55e" stroke-width="3.5" />
+                <text x="768" y="218" text-anchor="middle" fill="#0284c7" font-size="10.5" font-weight="800">
+                  CAMPO INDUCTIVO ACTIVO
+                </text>
+              </g>
+
+              <!-- MÓDULO TRANSMISOR EXTERNO DE LARGA DISTANCIA (Se acerca por fuera de la tapa) -->
+              <g id="emWirelessTxGroup" transform="translate(835, 225)">
+                <rect x="0" y="0" width="142" height="138" rx="10" fill="#ffffff" stroke="#0284c7" stroke-width="2.5" />
+                <!-- Bobina emisora frontal -->
+                <rect x="-10" y="18" width="12" height="102" rx="4" fill="#f59e0b" stroke="#78350f" stroke-width="1.5" />
+                <text x="14" y="24" fill="#0369a1" font-size="11" font-weight="800">TRANSMISOR EXTERNO</text>
+                <text x="14" y="40" fill="#0f172a" font-size="10" font-weight="700">Carga Inalámbrica</text>
+                <text x="14" y="54" fill="#334155" font-size="9.5">Larga Distancia (Tx)</text>
+                <rect x="14" y="66" width="112" height="54" rx="6" fill="#f0f9ff" stroke="#7dd3fc" stroke-width="1.5" />
+                <text x="70" y="86" text-anchor="middle" fill="#0369a1" font-size="10" font-weight="800" id="emTxStatusText">
+                  EN ESPERA (FUERA)
+                </text>
+                <text x="70" y="104" text-anchor="middle" fill="#475569" font-size="9.5">
+                  Acerca a la tapa para abrir
+                </text>
+              </g>
+
+              <!-- Callout explicativo izquierdo Solución 4 -->
+              <g transform="translate(32, 225)">
+                <rect x="0" y="0" width="242" height="132" rx="8" fill="#ffffff" stroke="#0284c7" stroke-width="2" />
+                <text x="12" y="22" fill="#0369a1" font-size="11.5" font-weight="800">VENTAJA DE LA TAPA CIEGA</text>
+                <text x="12" y="42" fill="#334155" font-size="10.5">1. Sobre la tapa interna va el</text>
+                <text x="12" y="57" fill="#334155" font-size="10.5">   Receptor Inalámbrico conectado</text>
+                <text x="12" y="72" fill="#334155" font-size="10.5">   directamente al actuador.</text>
+                <text x="12" y="90" fill="#334155" font-size="10.5">2. Al acercar el otro módulo por</text>
+                <text x="12" y="105" fill="#334155" font-size="10.5">   fuera, transfiere energía sin</text>
+                <text x="12" y="120" fill="#15803d" font-size="10.5" font-weight="700">   cables y desactiva el pasador.</text>
+              </g>
+            </g>
           </svg>
         </div>
       </div>
@@ -744,39 +815,45 @@
 
         <!-- Tabla comparativa de costos y cobertura de fallos -->
         <div class="panel-card">
-          <h3>Comparativa de Ingeniería y Costos</h3>
+          <h3>Comparativa de las 4 Soluciones</h3>
           <table class="comparison-table">
             <thead>
               <tr>
                 <th>Solución</th>
                 <th>Costo</th>
-                <th>¿Cubre apagón?</th>
-                <th>¿Cubre motor quemado?</th>
+                <th>Exterior</th>
+                <th>Seguridad</th>
               </tr>
             </thead>
             <tbody>
-              <tr class="best-row">
+              <tr>
                 <td><strong>1. Pasador + Llave/Guaya</strong></td>
                 <td>~$4 USD</td>
-                <td>✅ Sí</td>
-                <td>✅ Sí (100%)</td>
+                <td>Bombín llave</td>
+                <td>Cubre todo fallo</td>
               </tr>
               <tr>
                 <td><strong>2. Bornes Batería 12V</strong></td>
                 <td>~$1.50 USD</td>
-                <td>✅ Sí</td>
-                <td>❌ No</td>
+                <td>2 Contactos</td>
+                <td>Rápida y barata</td>
               </tr>
               <tr>
                 <td><strong>3. Leva Excéntrica 90°</strong></td>
                 <td>~$5 USD</td>
-                <td>✅ Sí</td>
-                <td>✅ Sí (100%)</td>
+                <td>Llave Allen</td>
+                <td>Mecánica pura</td>
+              </tr>
+              <tr class="best-row">
+                <td><strong>4. Carga Inalámbrica Tx/Rx</strong></td>
+                <td>~$8–12 USD</td>
+                <td><strong>Tapa 100% Ciega</strong></td>
+                <td><strong>Cero vandalismo</strong></td>
               </tr>
             </tbody>
           </table>
           <p class="table-footnote">
-            💡 <strong>Recomendación para la comunidad:</strong> Combinar la <strong>Opción 1 + Opción 2</strong> suma apenas <strong>~$5.50 USD</strong> al presupuesto y brinda doble respaldo (eléctrico externo y mecánico por llave).
+            💡 <strong>Ventaja única de la Opción 4:</strong> Al transmitir la energía <strong>a través de la tapa</strong> mediante los dos módulos de Carga Inalámbrica de Larga Distancia, <strong>no quedan huecos, cerraduras ni cables expuestos a la intemperie o al vandalismo</strong>.
           </p>
         </div>
       </aside>

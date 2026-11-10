@@ -316,8 +316,19 @@ body {
 #railMotionVector,
 #sol1MechanismLayer,
 #sol2MechanismLayer,
-#sol3MechanismLayer {
+#sol3MechanismLayer,
+#sol4MechanismLayer,
+#emWirelessWaves {
   transition: opacity 0.3s ease;
+}
+
+@keyframes pulseWirelessWave {
+  0% { opacity: 0.45; transform: translateX(2px); }
+  100% { opacity: 1; transform: translateX(-3px); }
+}
+
+.wireless-active path {
+  animation: pulseWirelessWave 0.55s infinite alternate ease-in-out;
 }
 
 /* Barra de pasos de presentación */
@@ -667,8 +678,8 @@ body {
 
 .solution-selector {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0.85rem;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.75rem;
   margin-top: 0.9rem;
 }
 
@@ -847,11 +858,9 @@ body {
   .emergency-workspace {
     grid-template-columns: 1fr;
   }
-  .presentation-steps {
-    grid-template-columns: repeat(2, 1fr);
-  }
+  .presentation-steps,
   .solution-selector {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
@@ -864,7 +873,8 @@ body {
   .emergency-hero {
     padding: 0.85rem 1rem;
   }
-  .presentation-steps {
+  .presentation-steps,
+  .solution-selector {
     grid-template-columns: 1fr;
   }
   .btn-grid {
