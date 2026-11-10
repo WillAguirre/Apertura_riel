@@ -56,4 +56,4 @@ def build_standalone_html() -> str:
 
 
 embedded_html = build_standalone_html()
-components.html(embedded_html, height=960, scrolling=True)
+components.html(embedded_html, height=1020, scrolling=True)
