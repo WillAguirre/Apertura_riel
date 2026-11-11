@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Puerta corrediza con bloqueo por solenoide</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+/* Layout: escenario técnico a la izquierda (corte + vista frontal en un solo SVG), panel de control a la derecha.
+   Paleta y tipografía heredadas del simulador Mortise original del proyecto. Tema único claro, por decisión. */
+:root {
+  color-scheme: light;
+  --bg-page: #f1f5f9;
+  --bg-card: #ffffff;
+  --bg-subtle: #f8fafc;
+  --border-subtle: #cbd5e1;
+  --text-main: #0f172a;
+  --text-muted: #475569;
+  --accent-blue: #0284c7;
+  --accent-green: #16a34a;
+  --accent-amber: #d97706;
+  --accent-rose: #e11d48;
+  --font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  font-family: var(--font-body);
+  background: var(--bg-page);
+  color: var(--text-main);
+  display: flex;
+  flex-direction: column;
+  line-height: 1.45;
+}
+button { font-family: inherit; }
+button:focus-visible, input:focus-visible { outline: 3px solid #38bdf8; outline-offset: 2px; }
+
+.topbar {
+  display: flex; justify-content: space-between; align-items: center; gap: 1.25rem;
+  padding: 0.7rem 1.25rem; background: #fff;
+  border-bottom: 1px solid var(--border-subtle);
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04); flex-wrap: wrap;
+}
+.brand-badge {
+  display: inline-block; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.08em;
+  color: var(--accent-blue); background: rgba(2, 132, 199, 0.1);
+  border: 1px solid rgba(2, 132, 199, 0.3); padding: 0.2rem 0.65rem;
+  border-radius: 999px; margin-bottom: 0.3rem;
+}
+.brand h1 { font-size: 1.3rem; font-weight: 800; text-wrap: balance; }
+.subtitle { font-size: 0.85rem; color: var(--text-muted); }
+
+.status-banner {
+  display: flex; align-items: center; gap: 0.85rem; padding: 0.55rem 1.1rem;
+  border-radius: 12px; background: #fff; border: 1.5px solid var(--border-subtle);
+  min-width: 300px; transition: background 0.3s, border-color 0.3s;
+}
+.status-dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; }
+.status-banner[data-state="locked"] { border-color: #f59e0b; background: #fffbeb; }
+.status-banner[data-state="locked"] .status-dot { background: var(--accent-amber); box-shadow: 0 0 10px rgba(217,119,6,.5); }
+.status-banner[data-state="unlocked"] { border-color: #22c55e; background: #f0fdf4; }
+.status-banner[data-state="unlocked"] .status-dot { background: var(--accent-green); box-shadow: 0 0 10px rgba(22,163,74,.5); }
+.status-banner[data-state="moving"] { border-color: #0284c7; background: #f0f9ff; }
+.status-banner[data-state="moving"] .status-dot { background: var(--accent-blue); box-shadow: 0 0 12px rgba(2,132,199,.6); animation: pulseDot 0.8s infinite alternate; }
+.status-banner[data-state="stress"] { border-color: #e11d48; background: #fff1f2; }
+.status-banner[data-state="stress"] .status-dot { background: var(--accent-rose); box-shadow: 0 0 14px rgba(225,29,72,.6); }
+@keyframes pulseDot { from { transform: scale(.85); opacity: .7; } to { transform: scale(1.2); opacity: 1; } }
+.status-label { font-size: 0.66rem; font-weight: 700; letter-spacing: 0.08em; color: var(--text-muted); }
+.status-value { font-size: 0.88rem; font-weight: 800; }
+
+.main-layout { display: flex; flex-direction: column; padding: 1rem 1.25rem 1.25rem; flex: 1; width: 100%; max-width: 1640px; margin: 0 auto; }
+.stage-card {
+  background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 16px;
+  display: flex; flex-direction: column; overflow: hidden;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06); min-width: 0;
+}
+.stage-header {
+  display: flex; justify-content: space-between; align-items: center; gap: 1rem;
+  padding: 0.95rem 1.25rem; border-bottom: 1px solid var(--border-subtle); flex-wrap: wrap;
+}
+.stage-title-group { flex: 1 1 380px; min-width: 0; }
+.stage-title-group h2 { font-size: 1.1rem; font-weight: 800; }
+.stage-hint { display: block; font-size: 0.84rem; font-weight: 600; color: var(--accent-blue); margin-top: 0.2rem; min-height: 2.5em; }
+.view-toggles { display: flex; gap: 0.6rem; flex-wrap: wrap; align-items: center; }
+.chip-btn {
+  background: var(--bg-subtle); color: var(--text-muted); border: 1px solid var(--border-subtle);
+  padding: 0.75rem 1rem; border-radius: 10px; font-size: 0.84rem; font-weight: 700; cursor: pointer;
+}
+.chip-btn:hover { color: var(--text-main); border-color: #94a3b8; }
+.chip-btn.active { background: #e0f2fe; color: #0369a1; border-color: #38bdf8; }
+
+.svg-viewport { width: 100%; flex: 1; background: #f8fafc; display: block; overflow-x: auto; }
+#sysSvg { width: 100%; min-width: 760px; height: auto; max-height: max(440px, calc(100vh - 190px)); display: block; margin: 0 auto; }
+.fade { transition: opacity 0.3s ease; }
+@keyframes wave { 0% { opacity: .4; } 100% { opacity: 1; } }
+.waves-on path { animation: wave 0.5s infinite alternate ease-in-out; }
+.waves-on path:nth-child(2) { animation-delay: .15s; }
+.waves-on path:nth-child(3) { animation-delay: .3s; }
+
+.presentation-steps {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem;
+  padding: 0.85rem 1.25rem; background: #f8fafc; border-top: 1px solid var(--border-subtle);
+}
+.step-pill {
+  display: flex; align-items: flex-start; gap: 0.65rem; padding: 0.6rem 0.75rem;
+  border-radius: 10px; background: #fff; border: 1px solid var(--border-subtle); transition: all .25s;
+}
+.step-pill.active { background: #e0f2fe; border-color: #0284c7; box-shadow: 0 2px 8px rgba(2,132,199,.12); }
+.step-num {
+  width: 24px; height: 24px; border-radius: 50%; background: #e2e8f0; font-size: 0.76rem;
+  font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.step-pill.active .step-num { background: var(--accent-blue); color: #fff; }
+.step-pill strong { display: block; font-size: 0.8rem; }
+.step-pill p { font-size: 0.73rem; color: var(--text-muted); margin-top: 0.1rem; }
+
+.control-sidebar { display: flex; flex-direction: column; gap: 1rem; min-width: 0; }
+.panel-card {
+  background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 14px;
+  padding: 1.05rem 1.15rem; box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
+}
+.panel-card h3 { font-size: 0.96rem; font-weight: 800; margin-bottom: 0.35rem; }
+.panel-desc { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.8rem; }
+
+.tx-btn {
+  width: 100%; display: flex; align-items: center; gap: 0.7rem; padding: 0.8rem 0.9rem;
+  border-radius: 10px; border: 1.5px solid #0369a1; cursor: pointer; text-align: left; color: #fff;
+  background: linear-gradient(135deg, #0284c7, #1d4ed8); margin-bottom: 0.8rem;
+}
+.tx-btn:hover { filter: brightness(1.08); }
+.tx-btn.near { background: linear-gradient(135deg, #d97706, #b45309); border-color: #b45309; }
+.tx-btn strong { display: block; font-size: 0.88rem; }
+.tx-btn small { display: block; font-size: 0.72rem; opacity: 0.92; }
+.tx-icon { width: 30px; height: 30px; flex-shrink: 0; }
+
+.rail-slider-box { background: var(--bg-subtle); border: 1px solid var(--border-subtle); border-radius: 10px; padding: 0.8rem; }
+.slider-header { display: flex; justify-content: space-between; align-items: center; gap: .5rem; font-size: 0.8rem; font-weight: 600; margin-bottom: 0.45rem; }
+.badge-val { background: #e0f2fe; color: #0369a1; padding: 0.15rem 0.5rem; border-radius: 6px; font-weight: 700; font-size: 0.75rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+#doorSlider { width: 100%; accent-color: var(--accent-blue); margin-bottom: 0.65rem; cursor: pointer; }
+.rail-quick-actions { display: grid; gap: 0.45rem; }
+.secondary-btn {
+  width: 100%; padding: 0.58rem 0.75rem; border-radius: 8px; background: #fff; color: var(--text-main);
+  border: 1px solid #94a3b8; font-size: 0.79rem; font-weight: 700; cursor: pointer;
+}
+.secondary-btn:hover { background: #f1f5f9; }
+.stress-btn { border-color: #f43f5e; color: #be123c; background: #fff1f2; }
+.stress-btn:hover { background: #ffe4e6; }
+.divider { border: none; border-top: 1px solid var(--border-subtle); margin: 0.8rem 0; }
+.demo-btn {
+  width: auto; white-space: nowrap; padding: 0.75rem 1rem; border-radius: 10px; color: #fff; cursor: pointer;
+  background: linear-gradient(135deg, #16a34a, #15803d); border: 1px solid #15803d; font-size: 0.84rem; font-weight: 700;
+}
+.demo-btn:hover { filter: brightness(1.08); }
+.demo-btn.running { background: linear-gradient(135deg, #e11d48, #be123c); border-color: #9f1239; }
+
+.metrics-grid { display: flex; flex-direction: column; gap: 0.6rem; margin-top: 0.5rem; }
+.metric-item { background: var(--bg-subtle); border: 1px solid var(--border-subtle); padding: 0.55rem 0.75rem; border-radius: 8px; }
+.metric-label { display: block; font-size: 0.72rem; font-weight: 600; color: var(--text-muted); }
+.metric-value { display: block; font-size: 0.86rem; font-weight: 800; margin-top: 0.12rem; }
+.hl-cyan { color: #0369a1; } .hl-amber { color: #b45309; } .hl-green { color: #15803d; } .hl-rose { color: #be123c; }
+.progress-bar { width: 100%; height: 6px; background: #e2e8f0; border-radius: 999px; overflow: hidden; margin-top: 0.35rem; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, #16a34a, #d97706); }
+
+.layer-list { list-style: none; display: flex; flex-direction: column; gap: 0.4rem; margin-top: 0.5rem; }
+.layer-list li { display: flex; gap: 0.6rem; align-items: flex-start; font-size: 0.78rem; color: var(--text-muted); }
+.layer-list strong { color: var(--text-main); }
+.sw { width: 22px; height: 22px; border-radius: 5px; flex-shrink: 0; border: 1.5px solid #334155; font-size: .7rem; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+.sw.cem { background: #cbd5e1; color: #0f172a; }
+.sw.cau { background: #1f2937; color: #f8fafc; }
+.note { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.65rem; background: #fffbeb; border: 1px solid #fde68a; padding: 0.55rem 0.7rem; border-radius: 8px; }
+
+@media (max-width: 1120px) {
+  .main-layout { grid-template-columns: 1fr; }
+  .presentation-steps { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 640px) {
+  .topbar { padding: 0.85rem 1rem; }
+  .main-layout { padding: 0.85rem 1rem; }
+  .presentation-steps { grid-template-columns: 1fr; }
+  .status-banner { min-width: 0; width: 100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .waves-on path, .status-banner[data-state="moving"] .status-dot { animation: none; }
+}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <div class="brand-badge">PROYECTO COMUNITARIO · RETO EPM</div>
+    <h1>Puerta corrediza en riel en U con bloqueo por solenoide</h1>
+  </div>
+</header>
+
+<main class="main-layout">
+  <section class="stage-card">
+    <div class="stage-header">
+      <div class="stage-title-group">
+        <h2>Sistema completo: corte transversal y vista frontal</h2>
+      </div>
+      <div class="view-toggles">
+        <button class="chip-btn active" id="toggleXray" aria-pressed="true" title="Ver u ocultar el interior de la puerta y de la caja del solenoide">Vista rayos X</button>
+        <button class="demo-btn running" id="btnDemo">Detener demostración</button>
+      </div>
+    </div>
+
+    <div class="svg-viewport">
+      <svg id="sysSvg" viewBox="0 0 1200 690" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Simulación de la puerta corrediza con bloqueo por solenoide">
+        <defs>
+          <pattern id="grid" width="30" height="30" patternUnits="userSpaceOnUse">
+            <path d="M 30 0 L 0 0 0 30" fill="none" stroke="rgba(100,116,139,0.14)" stroke-width="1"/>
+          </pattern>
+          <pattern id="cement" width="18" height="18" patternUnits="userSpaceOnUse">
+            <rect width="18" height="18" fill="#cbd5e1"/>
+            <circle cx="4" cy="5" r="1.4" fill="#94a3b8"/><circle cx="13" cy="11" r="1.8" fill="#a8b4c4"/>
+            <circle cx="8" cy="15" r="1" fill="#64748b"/><circle cx="15" cy="3" r="1" fill="#e2e8f0"/>
+          </pattern>
+          <pattern id="rubber" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+            <rect width="8" height="8" fill="#1f2937"/>
+            <line x1="0" y1="0" x2="0" y2="8" stroke="#3b4759" stroke-width="2"/>
+          </pattern>
+          <pattern id="wall" width="12" height="12" patternUnits="userSpaceOnUse" patternTransform="rotate(-45)">
+            <rect width="12" height="12" fill="#eef2f6"/>
+            <line x1="0" y1="0" x2="0" y2="12" stroke="#d5dde6" stroke-width="2"/>
+          </pattern>
+          <linearGradient id="railMetal" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#64748b"/><stop offset=".3" stop-color="#a3b0c2"/>
+            <stop offset=".6" stop-color="#cbd5e1"/><stop offset="1" stop-color="#55627a"/>
+          </linearGradient>
+          <linearGradient id="steel" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stop-color="#94a3b8"/><stop offset=".35" stop-color="#f8fafc"/>
+            <stop offset=".7" stop-color="#cbd5e1"/><stop offset="1" stop-color="#64748b"/>
+          </linearGradient>
+          <linearGradient id="solBody" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stop-color="#1e293b"/><stop offset=".5" stop-color="#3b4a63"/><stop offset="1" stop-color="#1e293b"/>
+          </linearGradient>
+          <linearGradient id="brass" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#f59e0b"/><stop offset=".5" stop-color="#fbbf24"/><stop offset="1" stop-color="#d97706"/>
+          </linearGradient>
+          <marker id="arrRed" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 1 L8 5 L0 9z" fill="#e11d48"/></marker>
+          <marker id="arrGreen" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 1 L8 5 L0 9z" fill="#16a34a"/></marker>
+          <clipPath id="frontClip"><rect x="425" y="0" width="775" height="690"/></clipPath>
+        </defs>
+
+        <rect width="1200" height="690" fill="#f8fafc"/>
+        <rect width="1200" height="690" fill="url(#grid)"/>
+        <line x1="414" y1="16" x2="414" y2="674" stroke="#cbd5e1" stroke-width="2" stroke-dasharray="8,6"/>
+
+        <!-- ============ CORTE TRANSVERSAL ============ -->
+        <text x="24" y="28" fill="#0f172a" font-size="14" font-weight="800">CORTE A–A · SÁNDWICH EN EL RIEL</text>
+        <text x="86" y="50" text-anchor="middle" fill="#0369a1" font-size="11" font-weight="800">EXTERIOR</text>
+        <text x="340" y="50" text-anchor="middle" fill="#475569" font-size="11" font-weight="800">INTERIOR</text>
+
+        <path d="M126 60 H294 V110 H282 V72 H138 V110 H126 Z" fill="url(#railMetal)" stroke="#334155" stroke-width="2"/>
+        <!-- caja del mecanismo, al otro lado del riel -->
+        <rect x="168" y="440" width="84" height="182" rx="5" fill="#e2e8f0" stroke="#475569" stroke-width="2"/>
+        <!-- riel en U -->
+        <path d="M126 370 V440 H294 V370 H282 V418 H138 V370 Z" fill="url(#railMetal)" stroke="#334155" stroke-width="2"/>
+        <rect x="199" y="418" width="22" height="22" fill="#0f172a"/>
+
+        <!-- 4 capas -->
+        <rect x="142" y="78" width="34" height="328" fill="url(#cement)" stroke="#475569" stroke-width="1.5"/>
+        <rect x="176" y="78" width="34" height="328" fill="url(#rubber)" stroke="#0f172a" stroke-width="1.5"/>
+        <rect x="210" y="78" width="34" height="328" fill="url(#rubber)" stroke="#0f172a" stroke-width="1.5"/>
+        <rect x="244" y="78" width="34" height="328" fill="url(#cement)" stroke="#475569" stroke-width="1.5"/>
+        <rect x="146" y="406" width="40" height="12" rx="3" fill="#f8fafc" stroke="#334155" stroke-width="1.5"/>
+        <rect x="234" y="406" width="38" height="12" rx="3" fill="#f8fafc" stroke="#334155" stroke-width="1.5"/>
+        <!-- cavidad del perno en la puerta y alojamiento del receptor -->
+        <rect x="199" y="370" width="22" height="36" fill="#e2e8f0" stroke="#64748b" stroke-width="1"/>
+        <rect x="176" y="176" width="13" height="98" fill="#e2e8f0" stroke="#64748b" stroke-width="1"/>
+        <rect x="177" y="180" width="8" height="90" rx="3" fill="#f59e0b" stroke="#b45309" stroke-width="1.5"/>
+        <!-- cable: receptor -> cable enrollado -> solenoide -->
+        <path d="M184 268 V300 H312" fill="none" stroke="#0284c7" stroke-width="2.5"/>
+        <polyline id="secCoil" fill="none" stroke="#0284c7" stroke-width="2.2" stroke-linejoin="round"/>
+        <path d="M312 470 V575 H230" fill="none" stroke="#0284c7" stroke-width="2.5"/>
+        <!-- solenoide fijo -->
+        <rect x="190" y="540" width="40" height="70" rx="5" fill="url(#solBody)" stroke="#0284c7" stroke-width="2"/>
+        <g stroke="#f59e0b" stroke-width="2"><line x1="194" y1="556" x2="226" y2="556"/><line x1="194" y1="568" x2="226" y2="568"/><line x1="194" y1="580" x2="226" y2="580"/><line x1="194" y1="592" x2="226" y2="592"/></g>
+        <circle id="secLed" cx="224" cy="547" r="3.5" fill="#ef4444" stroke="#fff" stroke-width="1"/>
+        <polyline id="secSpring" fill="none" stroke="#0284c7" stroke-width="2"/>
+        <g id="secBolt">
+          <rect x="205" y="488" width="10" height="82" fill="url(#steel)" stroke="#334155" stroke-width="1.5"/>
+          <rect x="192" y="470" width="36" height="18" rx="3" fill="url(#brass)" stroke="#92400e" stroke-width="1.5"/>
+          <rect x="202" y="376" width="16" height="94" rx="3" fill="url(#steel)" stroke="#1e293b" stroke-width="2"/>
+        </g>
+        <g font-size="11" font-weight="800" text-anchor="middle">
+          <circle cx="159" cy="130" r="10" fill="#fff" stroke="#334155" stroke-width="1.5"/><text x="159" y="134" fill="#0f172a">1</text>
+          <circle cx="193" cy="130" r="10" fill="#fff" stroke="#334155" stroke-width="1.5"/><text x="193" y="134" fill="#0f172a">2</text>
+          <circle cx="227" cy="130" r="10" fill="#fff" stroke="#334155" stroke-width="1.5"/><text x="227" y="134" fill="#0f172a">3</text>
+          <circle cx="261" cy="130" r="10" fill="#fff" stroke="#334155" stroke-width="1.5"/><text x="261" y="134" fill="#0f172a">4</text>
+        </g>
+        <g id="secWaves" class="fade" opacity="0" fill="none" stroke-width="3">
+          <path d="M150 198 Q164 225 150 252" stroke="#0284c7"/>
+          <path d="M161 192 Q178 225 161 258" stroke="#0ea5e9"/>
+          <path d="M172 186 Q192 225 172 264" stroke="#22c55e"/>
+        </g>
+        <g id="secTx" transform="translate(24,170)">
+          <rect x="0" y="0" width="60" height="110" rx="8" fill="#fff" stroke="#0284c7" stroke-width="2.5"/>
+          <rect x="58" y="10" width="8" height="90" rx="3" fill="#f59e0b" stroke="#78350f" stroke-width="1.5"/>
+          <text x="29" y="50" text-anchor="middle" fill="#0369a1" font-size="16" font-weight="800">Tx</text>
+          <text x="29" y="68" text-anchor="middle" fill="#475569" font-size="9" font-weight="700">CARGADOR</text>
+          <text x="29" y="80" text-anchor="middle" fill="#475569" font-size="9" font-weight="700">DEL EQUIPO</text>
+        </g>
+        <g id="secLabels" class="fade" font-size="10.5" font-weight="700" fill="#0f172a">
+          <g stroke="#0284c7" stroke-width="1.2" stroke-dasharray="3,3" fill="none">
+            <line x1="188" y1="215" x2="322" y2="215"/><line x1="222" y1="388" x2="322" y2="352"/>
+            <line x1="220" y1="456" x2="322" y2="456"/><line x1="222" y1="514" x2="322" y2="514"/><line x1="232" y1="576" x2="322" y2="576"/>
+          </g>
+          <text x="326" y="80">Guía superior</text>
+          <text x="326" y="212">Receptor Rx</text><text x="326" y="225" font-weight="500" fill="#475569">sobre capa 1</text>
+          <text x="326" y="350">Cavidad en</text><text x="326" y="363" font-weight="500" fill="#475569">la puerta</text>
+          <text x="326" y="408">Riel en U</text><text x="326" y="421" font-weight="500" fill="#475569">(fijo)</text>
+          <text x="326" y="460">Perno</text>
+          <text x="326" y="518">Resorte</text>
+          <text x="326" y="574">Solenoide</text><text x="326" y="587" font-weight="500" fill="#475569">bajo el riel</text>
+        </g>
+        <g font-size="11" font-weight="600" fill="#0f172a">
+          <rect x="24" y="636" width="16" height="16" fill="url(#cement)" stroke="#475569"/><text x="46" y="648">1 · Cemento (exterior)</text>
+          <rect x="214" y="636" width="16" height="16" fill="url(#rubber)" stroke="#0f172a"/><text x="236" y="648">2 · Caucho</text>
+          <rect x="24" y="660" width="16" height="16" fill="url(#rubber)" stroke="#0f172a"/><text x="46" y="672">3 · Caucho</text>
+          <rect x="214" y="660" width="16" height="16" fill="url(#cement)" stroke="#475569"/><text x="236" y="672">4 · Cemento (interior)</text>
+        </g>
+
+        <!-- ============ VISTA FRONTAL ============ -->
+        <text x="440" y="28" fill="#0f172a" font-size="14" font-weight="800">VISTA FRONTAL · PUERTA CORREDIZA</text>
+        <g clip-path="url(#frontClip)">
+          <rect x="440" y="78" width="730" height="328" fill="url(#wall)" stroke="#cbd5e1" stroke-width="1.5"/>
+          <rect x="470" y="78" width="400" height="328" fill="#dbeafe" stroke="#0284c7" stroke-width="2" stroke-dasharray="8,5"/>
+          <text x="608" y="330" text-anchor="middle" fill="#0369a1" font-size="20" font-weight="800">ACCESO LIBRE</text>
+          <text x="608" y="350" text-anchor="middle" fill="#0369a1" font-size="12" font-weight="600">vano de la puerta</text>
+
+          <rect x="440" y="60" width="730" height="44" rx="3" fill="url(#railMetal)" stroke="#334155" stroke-width="2"/>
+          <!-- caja del mecanismo fija bajo el riel -->
+          <rect x="535" y="440" width="270" height="182" rx="8" fill="#e2e8f0" stroke="#475569" stroke-width="2.5"/>
+          <rect x="440" y="370" width="730" height="70" rx="3" fill="url(#railMetal)" stroke="#334155" stroke-width="2"/>
+          <g fill="#0f172a"><rect x="549" y="418" width="22" height="22"/><rect x="669" y="418" width="22" height="22"/><rect x="759" y="418" width="22" height="22"/></g>
+
+          <!-- PUERTA -->
+          <g id="door">
+            <rect x="470" y="78" width="400" height="328" fill="#3b4658" stroke="#0f172a" stroke-width="2"/>
+            <circle cx="670" cy="225" r="46" fill="#e2e8f0" stroke="#64748b"/>
+            <g fill="#e2e8f0" stroke="#0284c7" stroke-width="2"><rect x="549" y="370" width="22" height="36"/><rect x="669" y="370" width="22" height="36"/><rect x="759" y="370" width="22" height="36"/></g>
+            <g fill="none" stroke="#f59e0b" stroke-width="4"><circle cx="670" cy="225" r="38"/><circle cx="670" cy="225" r="29"/><circle cx="670" cy="225" r="20"/></g>
+            <circle cx="670" cy="225" r="9" fill="#0f172a"/>
+            <path d="M680 261 V330 H870" stroke="#38bdf8" stroke-width="2.5" fill="none"/>
+            <g fill="#f8fafc" stroke="#334155" stroke-width="2"><circle cx="490" cy="412" r="6"/><circle cx="850" cy="412" r="6"/></g>
+            <rect id="cementFace" class="fade" x="470" y="78" width="400" height="328" fill="url(#cement)" stroke="#475569" stroke-width="2" opacity="0.28"/>
+            <circle cx="670" cy="225" r="50" fill="none" stroke="#0284c7" stroke-width="1.5" stroke-dasharray="4,4"/>
+            <text x="670" y="166" text-anchor="middle" fill="#0369a1" font-size="10.5" font-weight="800">PUNTO DE CARGA</text>
+            <text x="490" y="124" fill="#0f172a" font-size="11" font-weight="800">PUERTA · CAPA 1 DE CEMENTO</text>
+          </g>
+
+          <!-- cable enrollado: un extremo viaja con la puerta, el otro queda fijo y baja al solenoide -->
+          <path d="M1178 330 V634 H670 V610" stroke="#0284c7" stroke-width="2.5" fill="none"/>
+          <rect x="1171" y="322" width="14" height="16" rx="3" fill="#1e293b"/>
+          <polyline id="frCoil" fill="none" stroke="#0284c7" stroke-width="2.4" stroke-linejoin="round"/>
+          <!-- MECANISMO FIJO: contacto, cable, solenoide, resortes, puente y 3 pernos -->
+          <rect x="630" y="540" width="80" height="70" rx="6" fill="url(#solBody)" stroke="#0284c7" stroke-width="2.5"/>
+          <g stroke="#f59e0b" stroke-width="2.5"><line x1="638" y1="558" x2="702" y2="558"/><line x1="638" y1="570" x2="702" y2="570"/><line x1="638" y1="582" x2="702" y2="582"/><line x1="638" y1="594" x2="702" y2="594"/></g>
+          <circle id="frLed" cx="700" cy="548" r="4.5" fill="#ef4444" stroke="#fff" stroke-width="1.2"/>
+          <polyline id="frSpringL" fill="none" stroke="#0284c7" stroke-width="2.5"/>
+          <polyline id="frSpringR" fill="none" stroke="#0284c7" stroke-width="2.5"/>
+          <g id="frBolt">
+            <rect x="662" y="488" width="16" height="82" fill="url(#steel)" stroke="#334155" stroke-width="1.5"/>
+            <rect x="545" y="470" width="245" height="18" rx="4" fill="url(#brass)" stroke="#92400e" stroke-width="2"/>
+            <g fill="url(#steel)" stroke="#1e293b" stroke-width="2">
+              <rect x="551" y="376" width="18" height="94" rx="3"/><rect x="671" y="376" width="18" height="94" rx="3"/><rect x="761" y="376" width="18" height="94" rx="3"/>
+            </g>
+          </g>
+          <g id="boxCover" class="fade" opacity="0" pointer-events="none">
+            <rect x="535" y="440" width="270" height="182" rx="8" fill="#cbd5e1" stroke="#475569" stroke-width="2.5"/>
+            <text x="670" y="536" text-anchor="middle" fill="#1e293b" font-size="13" font-weight="800">CAJA DEL SOLENOIDE</text>
+          </g>
+
+          <rect id="topFront" class="fade" x="440" y="60" width="730" height="44" rx="3" fill="url(#railMetal)" stroke="#334155" stroke-width="2" opacity="0.4"/>
+          <rect id="railFront" class="fade" x="440" y="370" width="730" height="70" rx="3" fill="url(#railMetal)" stroke="#334155" stroke-width="2" opacity="0.4"/>
+          <text x="1160" y="460" text-anchor="end" fill="#0f172a" font-size="11.5" font-weight="800">RIEL EN U FIJO · 3 perforaciones por donde suben los pernos</text>
+
+          <g id="frTx" opacity="0">
+            <rect x="614" y="169" width="112" height="112" rx="14" fill="rgba(2,132,199,0.16)" stroke="#0284c7" stroke-width="3"/>
+          </g>
+
+          <g id="shearVec" class="fade" opacity="0">
+            <g stroke="#e11d48" stroke-width="3.5">
+              <line x1="505" y1="412" x2="542" y2="412" marker-end="url(#arrRed)"/>
+              <line x1="625" y1="412" x2="662" y2="412" marker-end="url(#arrRed)"/>
+              <line x1="715" y1="412" x2="752" y2="412" marker-end="url(#arrRed)"/>
+            </g>
+            <rect x="840" y="592" width="322" height="26" rx="6" fill="#fff" stroke="#e11d48" stroke-width="2"/>
+            <text x="1001" y="609" text-anchor="middle" fill="#be123c" font-size="11" font-weight="800">CORTANTE EN LOS 3 PERNOS · SOLENOIDE SIN CARGA</text>
+          </g>
+          <g id="motionVec" class="fade" opacity="0">
+            <line x1="560" y1="42" x2="1040" y2="42" stroke="#16a34a" stroke-width="3.5" marker-end="url(#arrGreen)" marker-start="url(#arrGreen)"/>
+            <rect x="660" y="30" width="280" height="24" rx="6" fill="#f8fafc"/>
+            <text x="800" y="47" text-anchor="middle" fill="#15803d" font-size="12" font-weight="800">PUERTA LIBRE PARA CORRER</text>
+          </g>
+
+          <g id="frLabels" class="fade">
+            <g stroke-width="1.5" stroke-dasharray="3,3" fill="none">
+              <line x1="900" y1="161" x2="712" y2="215" stroke="#d97706"/>
+              <line x1="900" y1="246" x2="783" y2="388" stroke="#16a34a"/>
+            </g>
+            <g font-size="10.5" fill="#334155">
+              <rect x="900" y="130" width="262" height="62" rx="6" fill="#fff" stroke="#d97706" stroke-width="1.5"/>
+              <text x="912" y="150" fill="#b45309" font-size="11" font-weight="800">1. RECEPTOR INALÁMBRICO (Rx)</text>
+              <text x="912" y="166">Pegado por dentro a la capa 1 de cemento.</text>
+              <text x="912" y="180">Por fuera no queda nada a la vista.</text>
+
+              <rect x="900" y="215" width="262" height="62" rx="6" fill="#fff" stroke="#16a34a" stroke-width="1.5"/>
+              <text x="912" y="235" fill="#15803d" font-size="11" font-weight="800">2. CAVIDADES EN LA PUERTA</text>
+              <text x="912" y="251">Los 3 pernos cruzan el riel y entran en el</text>
+              <text x="912" y="265">borde inferior de la puerta para trabarla.</text>
+            </g>
+          </g>
+          <!-- la caja queda fija: su etiqueta se ve siempre -->
+          <g id="boxLabels" class="fade" font-size="10.5" fill="#334155">
+            <line x1="840" y1="517" x2="712" y2="572" stroke="#0284c7" stroke-width="1.5" stroke-dasharray="3,3"/>
+            <rect x="840" y="486" width="322" height="92" rx="6" fill="#fff" stroke="#0284c7" stroke-width="1.5"/>
+            <text x="852" y="506" fill="#0369a1" font-size="11" font-weight="800">3. SOLENOIDE FIJO, AL OTRO LADO DEL RIEL</text>
+            <text x="852" y="523">Con energía baja el puente y saca los 3 pernos.</text>
+            <text x="852" y="538">Sin energía, el resorte los vuelve a subir.</text>
+            <text x="852" y="553">Un cable enrollado lo une al receptor de la puerta:</text>
+            <text x="852" y="568">se estira y se recoge al correrla, sin desconectarse.</text>
+          </g>
+        </g>
+      </svg>
+    </div>
+
+    <div class="presentation-steps">
+      <div class="step-pill active" id="step1"><span class="step-num">1</span><div><strong>Puerta bloqueada</strong><p>Los 3 pernos cruzan el riel y traban la puerta, sin consumo.</p></div></div>
+      <div class="step-pill" id="step2"><span class="step-num">2</span><div><strong>Se acerca el cargador</strong><p>El equipo lo apoya sobre la capa 1 de cemento.</p></div></div>
+      <div class="step-pill" id="step3"><span class="step-num">3</span><div><strong>El solenoide actúa</strong><p>Fijo bajo el riel, recibe la energía y baja los 3 pernos.</p></div></div>
+      <div class="step-pill" id="step4"><span class="step-num">4</span><div><strong>La puerta corre</strong><p>Al cerrar, el resorte la vuelve a bloquear sola.</p></div></div>
+    </div>
+  </section>
+</main>
+
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const STROKE = 36, SLIDE = 280;
+  const s = { tx: 0, txTarget: 0, ext: 1, pos: 0, posTarget: 0, shake: 0, demo: 0, xray: true };
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function approach(v, target, rate, dt) {
+    if (reduced) return target;
+    const d = target - v, step = rate * dt;
+    return Math.abs(d) <= step ? target : v + Math.sign(d) * step;
+  }
+  function zig(xc, yTop, yBot, half, n) {
+    const pts = [xc + ',' + yTop.toFixed(1)];
+    for (let i = 1; i < n; i++) {
+      const y = yTop + ((yBot - yTop) * i) / n;
+      pts.push((xc + (i % 2 ? half : -half)) + ',' + y.toFixed(1));
+    }
+    pts.push(xc + ',' + yBot.toFixed(1));
+    return pts.join(' ');
+  }
+
+  // cable enrollado tipo teléfono entre dos puntos
+  function coil(x0, y0, x1, y1, loops, a, b) {
+    const dx = x1 - x0, dy = y1 - y0, len = Math.hypot(dx, dy) || 1;
+    const ux = dx / len, uy = dy / len, nx = -uy, ny = ux, pts = [], N = loops * 18;
+    for (let i = 0; i <= N; i++) {
+      const u = i / N, th = u * loops * 2 * Math.PI;
+      const along = len * u + a * Math.sin(th), side = b * (1 - Math.cos(th)) - b;
+      pts.push((x0 + ux * along + nx * side).toFixed(1) + ',' + (y0 + uy * along + ny * side).toFixed(1));
+    }
+    return pts.join(' ');
+  }
+  $('secCoil').setAttribute('points', coil(312, 300, 312, 470, 10, 6, 7));
+
+  function update(dt) {
+    s.tx = approach(s.tx, s.txTarget, 1 / 0.7, dt);
+    const closed = s.pos < 0.015;
+    const linked = s.tx > 0.97 && s.pos < 0.12;        // cargador apoyado frente al receptor
+    // energizado -> baja los pernos; sin energía y puerta cerrada -> el resorte los sube; puerta corrida -> quedan apoyados bajo ella
+    if (linked) s.ext = approach(s.ext, 0, 1 / 0.3, dt);
+    else if (closed) s.ext = approach(s.ext, 1, 1 / 0.2, dt);
+    const free = s.ext < 0.05;
+    if (s.shake > 0) s.shake = Math.max(0, s.shake - dt);
+    if (free) s.pos = approach(s.pos, s.posTarget, 0.85, dt);
+    else s.posTarget = 0;
+    return { closed, linked, free };
+  }
+
+  function render(st) {
+    const off = (1 - s.ext) * STROKE;
+    const shakePx = s.shake > 0 ? Math.sin(performance.now() * 0.055) * 4 * (0.4 + (s.shake / 1.3) * 0.6) : 0;
+    $('door').setAttribute('transform', 'translate(' + (s.pos * SLIDE + shakePx).toFixed(2) + ',0)');
+    $('frBolt').setAttribute('transform', 'translate(0,' + off.toFixed(2) + ')');
+    $('secBolt').setAttribute('transform', 'translate(0,' + off.toFixed(2) + ')');
+    $('frSpringL').setAttribute('points', zig(645, 488 + off, 540, 7, 8));
+    $('frSpringR').setAttribute('points', zig(695, 488 + off, 540, 7, 8));
+    $('secSpring').setAttribute('points', zig(210, 488 + off, 540, 9, 8));
+    $('secTx').setAttribute('transform', 'translate(' + (24 + s.tx * 52).toFixed(1) + ',170)');
+    $('frTx').setAttribute('opacity', s.tx.toFixed(2));
+    $('frCoil').setAttribute('points', coil(870 + s.pos * SLIDE + shakePx, 330, 1171, 330, 16, 8, 9));
+    $('cementFace').setAttribute('opacity', s.xray ? '0.28' : '1');
+    $('railFront').setAttribute('opacity', s.xray ? '0.4' : '1');
+    $('topFront').setAttribute('opacity', s.xray ? '0.4' : '1');
+    $('boxCover').setAttribute('opacity', s.xray ? '0' : '0.97');
+    const led = st.linked ? '#22c55e' : '#ef4444';
+    $('secLed').setAttribute('fill', led); $('frLed').setAttribute('fill', led);
+    const waves = $('secWaves');
+    waves.setAttribute('opacity', st.linked ? '1' : '0');
+    waves.classList.toggle('waves-on', st.linked);
+    const stressing = s.shake > 0;
+    $('shearVec').setAttribute('opacity', stressing ? '1' : '0');
+    $('motionVec').setAttribute('opacity', st.free && !stressing ? '1' : '0');
+    $('frLabels').setAttribute('opacity', st.closed ? '1' : '0');
+
+    let step = 1;
+    if (!st.closed) step = 4;
+    else if (st.linked) step = 3;
+    else if (s.tx > 0.03) step = 2;
+    for (let i = 1; i <= 4; i++) $('step' + i).classList.toggle('active', i === step);
+  }
+
+  let last = performance.now();
+  function frame(now) {
+    const dt = Math.min(0.05, (now - last) / 1000); last = now;
+    render(update(dt));
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  // ---------- demostración automática ----------
+  const btn = $('btnDemo');
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  async function until(cond) { while (!cond()) await wait(60); }
+  function stopDemo() {
+    s.demo++;
+    btn.classList.remove('running');
+    btn.textContent = 'Reanudar demostración';
+  }
+  async function startDemo() {
+    const id = ++s.demo;
+    const alive = () => s.demo === id;
+    btn.classList.add('running');
+    btn.textContent = 'Detener demostración';
+    while (alive()) {
+      s.txTarget = 0; s.posTarget = 0;
+      await until(() => !alive() || (s.pos < 0.01 && s.ext > 0.98)); if (!alive()) break;
+      await wait(1400); if (!alive()) break;
+      s.shake = 1.3;                                   // intento de abrir sin cargador
+      await wait(2400); if (!alive()) break;
+      s.txTarget = 1;                                  // se acerca el cargador
+      await until(() => !alive() || s.ext < 0.02); if (!alive()) break;
+      await wait(1300); if (!alive()) break;
+      s.posTarget = 1;                                 // la puerta corre
+      await until(() => !alive() || s.pos > 0.99); if (!alive()) break;
+      await wait(700); if (!alive()) break;
+      s.txTarget = 0;
+      await wait(2200); if (!alive()) break;
+      s.posTarget = 0;                                 // se cierra y se bloquea sola
+      await until(() => !alive() || (s.pos < 0.01 && s.ext > 0.98)); if (!alive()) break;
+      await wait(1800);
+    }
+  }
+  $('toggleXray').addEventListener('click', (e) => {
+    s.xray = !s.xray;
+    e.currentTarget.classList.toggle('active', s.xray);
+    e.currentTarget.setAttribute('aria-pressed', String(s.xray));
+  });
+  btn.addEventListener('click', () => { if (btn.classList.contains('running')) stopDemo(); else startDemo(); });
+  startDemo();
+})();
+</script>
+</body>
+</html>
