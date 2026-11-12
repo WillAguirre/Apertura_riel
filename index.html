@@ -92,6 +92,7 @@ button:focus-visible, input:focus-visible { outline: 3px solid #38bdf8; outline-
 .svg-viewport { width: 100%; flex: 1; background: #f8fafc; display: block; overflow-x: auto; }
 #sysSvg { width: 100%; min-width: 760px; height: auto; max-height: max(440px, calc(100vh - 190px)); display: block; margin: 0 auto; }
 .fade { transition: opacity 0.3s ease; }
+.hide-annot .annot { display: none; }
 @keyframes wave { 0% { opacity: .4; } 100% { opacity: 1; } }
 .waves-on path { animation: wave 0.5s infinite alternate ease-in-out; }
 .waves-on path:nth-child(2) { animation-delay: .15s; }
@@ -187,8 +188,8 @@ button:focus-visible, input:focus-visible { outline: 3px solid #38bdf8; outline-
 <body>
 <header class="topbar">
   <div class="brand">
-    <div class="brand-badge">SIMULACION DE FUNCIONAMIENTO</div>
-    <h1>PUERTA EN RIEL</h1>
+    <div class="brand-badge">PROYECTO COMUNITARIO · RETO EPM</div>
+    <h1>Puerta corrediza en riel en U con bloqueo por solenoide</h1>
   </div>
 </header>
 
@@ -196,10 +197,11 @@ button:focus-visible, input:focus-visible { outline: 3px solid #38bdf8; outline-
   <section class="stage-card">
     <div class="stage-header">
       <div class="stage-title-group">
-        <h2>corte transversal | vista frontal</h2>
+        <h2>Sistema completo: corte transversal y vista frontal</h2>
       </div>
       <div class="view-toggles">
         <button class="chip-btn active" id="toggleXray" aria-pressed="true" title="Ver u ocultar el interior de la puerta y de la caja del solenoide">Vista rayos X</button>
+        <button class="chip-btn active" id="toggleText" aria-pressed="true" title="Mostrar u ocultar los textos explicativos del dibujo">Textos explicativos</button>
         <button class="demo-btn running" id="btnDemo">Detener demostración</button>
       </div>
     </div>
@@ -247,9 +249,9 @@ button:focus-visible, input:focus-visible { outline: 3px solid #38bdf8; outline-
         <line x1="414" y1="16" x2="414" y2="674" stroke="#cbd5e1" stroke-width="2" stroke-dasharray="8,6"/>
 
         <!-- ============ CORTE TRANSVERSAL ============ -->
-        <text x="24" y="28" fill="#0f172a" font-size="14" font-weight="800">SÁNDWICH EN EL RIEL</text>
-        <text x="86" y="50" text-anchor="middle" fill="#0369a1" font-size="11" font-weight="800">EXTERIOR</text>
-        <text x="340" y="50" text-anchor="middle" fill="#475569" font-size="11" font-weight="800">INTERIOR</text>
+        <text class="annot" x="24" y="28" fill="#0f172a" font-size="14" font-weight="800">CORTE A–A · SÁNDWICH EN EL RIEL</text>
+        <text class="annot" x="86" y="50" text-anchor="middle" fill="#0369a1" font-size="11" font-weight="800">EXTERIOR</text>
+        <text class="annot" x="340" y="50" text-anchor="middle" fill="#475569" font-size="11" font-weight="800">INTERIOR</text>
 
         <path d="M126 60 H294 V110 H282 V72 H138 V110 H126 Z" fill="url(#railMetal)" stroke="#334155" stroke-width="2"/>
         <!-- caja del mecanismo, al otro lado del riel -->
@@ -283,7 +285,7 @@ button:focus-visible, input:focus-visible { outline: 3px solid #38bdf8; outline-
           <rect x="192" y="470" width="36" height="18" rx="3" fill="url(#brass)" stroke="#92400e" stroke-width="1.5"/>
           <rect x="202" y="376" width="16" height="94" rx="3" fill="url(#steel)" stroke="#1e293b" stroke-width="2"/>
         </g>
-        <g font-size="11" font-weight="800" text-anchor="middle">
+        <g class="annot" font-size="11" font-weight="800" text-anchor="middle">
           <circle cx="159" cy="130" r="10" fill="#fff" stroke="#334155" stroke-width="1.5"/><text x="159" y="134" fill="#0f172a">1</text>
           <circle cx="193" cy="130" r="10" fill="#fff" stroke="#334155" stroke-width="1.5"/><text x="193" y="134" fill="#0f172a">2</text>
           <circle cx="227" cy="130" r="10" fill="#fff" stroke="#334155" stroke-width="1.5"/><text x="227" y="134" fill="#0f172a">3</text>
@@ -297,11 +299,11 @@ button:focus-visible, input:focus-visible { outline: 3px solid #38bdf8; outline-
         <g id="secTx" transform="translate(24,170)">
           <rect x="0" y="0" width="60" height="110" rx="8" fill="#fff" stroke="#0284c7" stroke-width="2.5"/>
           <rect x="58" y="10" width="8" height="90" rx="3" fill="#f59e0b" stroke="#78350f" stroke-width="1.5"/>
-          <text x="29" y="50" text-anchor="middle" fill="#0369a1" font-size="16" font-weight="800">Tx</text>
-          <text x="29" y="68" text-anchor="middle" fill="#475569" font-size="9" font-weight="700">CARGADOR</text>
-          <text x="29" y="80" text-anchor="middle" fill="#475569" font-size="9" font-weight="700">DEL EQUIPO</text>
+          <text class="annot" x="29" y="50" text-anchor="middle" fill="#0369a1" font-size="16" font-weight="800">Tx</text>
+          <text class="annot" x="29" y="68" text-anchor="middle" fill="#475569" font-size="9" font-weight="700">CARGADOR</text>
+          <text class="annot" x="29" y="80" text-anchor="middle" fill="#475569" font-size="9" font-weight="700">DEL EQUIPO</text>
         </g>
-        <g id="secLabels" class="fade" font-size="10.5" font-weight="700" fill="#0f172a">
+        <g id="secLabels" class="fade annot" font-size="10.5" font-weight="700" fill="#0f172a">
           <g stroke="#0284c7" stroke-width="1.2" stroke-dasharray="3,3" fill="none">
             <line x1="188" y1="215" x2="322" y2="215"/><line x1="222" y1="388" x2="322" y2="352"/>
             <line x1="220" y1="456" x2="322" y2="456"/><line x1="222" y1="514" x2="322" y2="514"/><line x1="232" y1="576" x2="322" y2="576"/>
@@ -314,7 +316,7 @@ button:focus-visible, input:focus-visible { outline: 3px solid #38bdf8; outline-
           <text x="326" y="518">Resorte</text>
           <text x="326" y="574">Solenoide</text><text x="326" y="587" font-weight="500" fill="#475569">bajo el riel</text>
         </g>
-        <g font-size="11" font-weight="600" fill="#0f172a">
+        <g class="annot" font-size="11" font-weight="600" fill="#0f172a">
           <rect x="24" y="636" width="16" height="16" fill="url(#cement)" stroke="#475569"/><text x="46" y="648">1 · Cemento (exterior)</text>
           <rect x="214" y="636" width="16" height="16" fill="url(#rubber)" stroke="#0f172a"/><text x="236" y="648">2 · Caucho</text>
           <rect x="24" y="660" width="16" height="16" fill="url(#rubber)" stroke="#0f172a"/><text x="46" y="672">3 · Caucho</text>
@@ -322,12 +324,12 @@ button:focus-visible, input:focus-visible { outline: 3px solid #38bdf8; outline-
         </g>
 
         <!-- ============ VISTA FRONTAL ============ -->
-        <text x="440" y="28" fill="#0f172a" font-size="14" font-weight="800">VISTA FRONTAL · PUERTA CORREDIZA</text>
+        <text class="annot" x="440" y="28" fill="#0f172a" font-size="14" font-weight="800">VISTA FRONTAL · PUERTA CORREDIZA</text>
         <g clip-path="url(#frontClip)">
           <rect x="440" y="78" width="730" height="328" fill="url(#wall)" stroke="#cbd5e1" stroke-width="1.5"/>
           <rect x="470" y="78" width="400" height="328" fill="#dbeafe" stroke="#0284c7" stroke-width="2" stroke-dasharray="8,5"/>
-          <text x="608" y="330" text-anchor="middle" fill="#0369a1" font-size="20" font-weight="800">ACCESO LIBRE</text>
-          <text x="608" y="350" text-anchor="middle" fill="#0369a1" font-size="12" font-weight="600">vano de la puerta</text>
+          <text class="annot" x="608" y="330" text-anchor="middle" fill="#0369a1" font-size="20" font-weight="800">ACCESO LIBRE</text>
+          <text class="annot" x="608" y="350" text-anchor="middle" fill="#0369a1" font-size="12" font-weight="600">vano de la puerta</text>
 
           <rect x="440" y="60" width="730" height="44" rx="3" fill="url(#railMetal)" stroke="#334155" stroke-width="2"/>
           <!-- caja del mecanismo fija bajo el riel -->
@@ -346,8 +348,8 @@ button:focus-visible, input:focus-visible { outline: 3px solid #38bdf8; outline-
             <g fill="#f8fafc" stroke="#334155" stroke-width="2"><circle cx="490" cy="412" r="6"/><circle cx="850" cy="412" r="6"/></g>
             <rect id="cementFace" class="fade" x="470" y="78" width="400" height="328" fill="url(#cement)" stroke="#475569" stroke-width="2" opacity="0.28"/>
             <circle cx="670" cy="225" r="50" fill="none" stroke="#0284c7" stroke-width="1.5" stroke-dasharray="4,4"/>
-            <text x="670" y="166" text-anchor="middle" fill="#0369a1" font-size="10.5" font-weight="800">PUNTO DE CARGA</text>
-            <text x="490" y="124" fill="#0f172a" font-size="11" font-weight="800">PUERTA · CAPA 1 DE CEMENTO</text>
+            <text class="annot" x="670" y="166" text-anchor="middle" fill="#0369a1" font-size="10.5" font-weight="800">PUNTO DE CARGA</text>
+            <text class="annot" x="490" y="124" fill="#0f172a" font-size="11" font-weight="800">PUERTA · CAPA 1 DE CEMENTO</text>
           </g>
 
           <!-- cable enrollado: un extremo viaja con la puerta, el otro queda fijo y baja al solenoide -->
@@ -369,12 +371,12 @@ button:focus-visible, input:focus-visible { outline: 3px solid #38bdf8; outline-
           </g>
           <g id="boxCover" class="fade" opacity="0" pointer-events="none">
             <rect x="535" y="440" width="270" height="182" rx="8" fill="#cbd5e1" stroke="#475569" stroke-width="2.5"/>
-            <text x="670" y="536" text-anchor="middle" fill="#1e293b" font-size="13" font-weight="800">CAJA DEL SOLENOIDE</text>
+            <text class="annot" x="670" y="536" text-anchor="middle" fill="#1e293b" font-size="13" font-weight="800">CAJA DEL SOLENOIDE</text>
           </g>
 
           <rect id="topFront" class="fade" x="440" y="60" width="730" height="44" rx="3" fill="url(#railMetal)" stroke="#334155" stroke-width="2" opacity="0.4"/>
           <rect id="railFront" class="fade" x="440" y="370" width="730" height="70" rx="3" fill="url(#railMetal)" stroke="#334155" stroke-width="2" opacity="0.4"/>
-          <text x="1160" y="460" text-anchor="end" fill="#0f172a" font-size="11.5" font-weight="800">RIEL EN U FIJO · 3 perforaciones por donde suben los pernos</text>
+          <text class="annot" x="1160" y="460" text-anchor="end" fill="#0f172a" font-size="11.5" font-weight="800">RIEL EN U FIJO · 3 perforaciones por donde suben los pernos</text>
 
           <g id="frTx" opacity="0">
             <rect x="614" y="169" width="112" height="112" rx="14" fill="rgba(2,132,199,0.16)" stroke="#0284c7" stroke-width="3"/>
@@ -386,16 +388,16 @@ button:focus-visible, input:focus-visible { outline: 3px solid #38bdf8; outline-
               <line x1="625" y1="412" x2="662" y2="412" marker-end="url(#arrRed)"/>
               <line x1="715" y1="412" x2="752" y2="412" marker-end="url(#arrRed)"/>
             </g>
-            <rect x="840" y="592" width="322" height="26" rx="6" fill="#fff" stroke="#e11d48" stroke-width="2"/>
-            <text x="1001" y="609" text-anchor="middle" fill="#be123c" font-size="11" font-weight="800">CORTANTE EN LOS 3 PERNOS · SOLENOIDE SIN CARGA</text>
+            <rect class="annot" x="840" y="592" width="322" height="26" rx="6" fill="#fff" stroke="#e11d48" stroke-width="2"/>
+            <text class="annot" x="1001" y="609" text-anchor="middle" fill="#be123c" font-size="11" font-weight="800">CORTANTE EN LOS 3 PERNOS · SOLENOIDE SIN CARGA</text>
           </g>
           <g id="motionVec" class="fade" opacity="0">
             <line x1="560" y1="42" x2="1040" y2="42" stroke="#16a34a" stroke-width="3.5" marker-end="url(#arrGreen)" marker-start="url(#arrGreen)"/>
-            <rect x="660" y="30" width="280" height="24" rx="6" fill="#f8fafc"/>
-            <text x="800" y="47" text-anchor="middle" fill="#15803d" font-size="12" font-weight="800">PUERTA LIBRE PARA CORRER</text>
+            <rect class="annot" x="660" y="30" width="280" height="24" rx="6" fill="#f8fafc"/>
+            <text class="annot" x="800" y="47" text-anchor="middle" fill="#15803d" font-size="12" font-weight="800">PUERTA LIBRE PARA CORRER</text>
           </g>
 
-          <g id="frLabels" class="fade">
+          <g id="frLabels" class="fade annot">
             <g stroke-width="1.5" stroke-dasharray="3,3" fill="none">
               <line x1="900" y1="161" x2="712" y2="215" stroke="#d97706"/>
               <line x1="900" y1="246" x2="783" y2="388" stroke="#16a34a"/>
@@ -413,7 +415,7 @@ button:focus-visible, input:focus-visible { outline: 3px solid #38bdf8; outline-
             </g>
           </g>
           <!-- la caja queda fija: su etiqueta se ve siempre -->
-          <g id="boxLabels" class="fade" font-size="10.5" fill="#334155">
+          <g id="boxLabels" class="fade annot" font-size="10.5" fill="#334155">
             <line x1="840" y1="517" x2="712" y2="572" stroke="#0284c7" stroke-width="1.5" stroke-dasharray="3,3"/>
             <rect x="840" y="486" width="322" height="92" rx="6" fill="#fff" stroke="#0284c7" stroke-width="1.5"/>
             <text x="852" y="506" fill="#0369a1" font-size="11" font-weight="800">3. SOLENOIDE FIJO, AL OTRO LADO DEL RIEL</text>
@@ -439,7 +441,7 @@ button:focus-visible, input:focus-visible { outline: 3px solid #38bdf8; outline-
 (function () {
   const $ = (id) => document.getElementById(id);
   const STROKE = 36, SLIDE = 280;
-  const s = { tx: 0, txTarget: 0, ext: 1, pos: 0, posTarget: 0, shake: 0, demo: 0, xray: true };
+  const s = { tx: 0, txTarget: 0, ext: 1, pos: 0, posTarget: 0, shake: 0, demo: 0, stage: 0, xray: true, annot: true };
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   function approach(v, target, rate, dt) {
@@ -525,43 +527,47 @@ button:focus-visible, input:focus-visible { outline: 3px solid #38bdf8; outline-
   }
   requestAnimationFrame(frame);
 
-  // ---------- demostración automática ----------
+  // ---------- demostración automática (ciclo continuo y reanudable) ----------
   const btn = $('btnDemo');
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   async function until(cond) { while (!cond()) await wait(60); }
+  const closedLocked = () => s.pos < 0.01 && s.ext > 0.98;
+  // Cada etapa es idempotente: si la demostración se detiene en medio de una,
+  // al reanudar se vuelve a ejecutar esa etapa y el ciclo sigue desde ahí.
+  const STAGES = [
+    async (ok) => { s.txTarget = 0; s.posTarget = 0; await until(() => !ok() || closedLocked()); if (ok()) await wait(1400); },   // puerta bloqueada
+    async (ok) => { s.shake = 1.3; await wait(2400); },                                                                           // intento de abrir sin cargador
+    async (ok) => { s.txTarget = 1; await until(() => !ok() || s.ext < 0.02); if (ok()) await wait(1300); },                       // cargador acerca, solenoide baja pernos
+    async (ok) => { s.posTarget = 1; await until(() => !ok() || s.pos > 0.99); if (ok()) await wait(700); },                       // la puerta corre
+    async (ok) => { s.txTarget = 0; await wait(2200); },                                                                           // se retira el cargador
+    async (ok) => { s.posTarget = 0; await until(() => !ok() || closedLocked()); if (ok()) await wait(1800); },                    // cierra y se bloquea sola
+  ];
   function stopDemo() {
-    s.demo++;
+    s.demo++;                        // invalida el ciclo en curso; s.stage conserva la etapa actual
     btn.classList.remove('running');
     btn.textContent = 'Reanudar demostración';
   }
   async function startDemo() {
     const id = ++s.demo;
-    const alive = () => s.demo === id;
+    const ok = () => s.demo === id;
     btn.classList.add('running');
     btn.textContent = 'Detener demostración';
-    while (alive()) {
-      s.txTarget = 0; s.posTarget = 0;
-      await until(() => !alive() || (s.pos < 0.01 && s.ext > 0.98)); if (!alive()) break;
-      await wait(1400); if (!alive()) break;
-      s.shake = 1.3;                                   // intento de abrir sin cargador
-      await wait(2400); if (!alive()) break;
-      s.txTarget = 1;                                  // se acerca el cargador
-      await until(() => !alive() || s.ext < 0.02); if (!alive()) break;
-      await wait(1300); if (!alive()) break;
-      s.posTarget = 1;                                 // la puerta corre
-      await until(() => !alive() || s.pos > 0.99); if (!alive()) break;
-      await wait(700); if (!alive()) break;
-      s.txTarget = 0;
-      await wait(2200); if (!alive()) break;
-      s.posTarget = 0;                                 // se cierra y se bloquea sola
-      await until(() => !alive() || (s.pos < 0.01 && s.ext > 0.98)); if (!alive()) break;
-      await wait(1800);
+    while (ok()) {
+      await STAGES[s.stage](ok);
+      if (!ok()) break;              // detenida: no avanza, para reanudar en esta misma etapa
+      s.stage = (s.stage + 1) % STAGES.length;
     }
   }
   $('toggleXray').addEventListener('click', (e) => {
     s.xray = !s.xray;
     e.currentTarget.classList.toggle('active', s.xray);
     e.currentTarget.setAttribute('aria-pressed', String(s.xray));
+  });
+  $('toggleText').addEventListener('click', (e) => {
+    s.annot = !s.annot;
+    $('sysSvg').classList.toggle('hide-annot', !s.annot);
+    e.currentTarget.classList.toggle('active', s.annot);
+    e.currentTarget.setAttribute('aria-pressed', String(s.annot));
   });
   btn.addEventListener('click', () => { if (btn.classList.contains('running')) stopDemo(); else startDemo(); });
   startDemo();
